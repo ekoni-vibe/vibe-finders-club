@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DealRoom</title>
+  <meta name="description" content="DealRoom is an investment workspace for deal pipeline management, underwriting, valuation estimates, and transaction tools." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="DealRoom | Investment Workspace" />
+  <meta property="og:description" content="Manage deal pipelines, underwriting, valuation estimates, and transaction workflows in DealRoom." />
   <script>
     (function () {
       var originalWarn = console.warn.bind(console);
@@ -18,6 +22,7 @@
     })();
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -136,41 +141,147 @@
 </head>
 <body class="bg-terminal text-slate-200 font-mono min-h-screen" x-data="dealRoomApp()">
 
-  <!-- Header -->
-  <header class="border-b-2 border-slate-700 bg-slate-900 px-4 py-3 no-print">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <h1 class="text-sm sm:text-base font-bold tracking-widest text-slate-100 uppercase">
-        DEALROOM // PROPRIETARY TERMINAL
-      </h1>
-      <div class="flex items-center gap-2 flex-wrap">
-        <button
-          type="button"
-          @click="exportJson()"
-          class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
-        >
-          JSON Export
-        </button>
-        <button
-          type="button"
-          @click="importJson()"
-          class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
-        >
-          JSON Import
-        </button>
-        <span
-          class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 text-emerald-400"
-          x-text="status"
-        ></span>
-      </div>
+  <aside class="hidden lg:flex w-64 flex-col fixed inset-y-0 z-40 border-r-2 border-slate-700 bg-slate-900 no-print">
+    <a href="#dashboard" class="flex items-center gap-3 border-b-2 border-slate-700 px-5 py-5">
+      <span class="grid h-10 w-10 place-items-center border-2 border-emerald-500 bg-emerald-900/30 text-lg font-bold text-emerald-300" aria-hidden="true">D</span>
+      <span>
+        <span class="block text-sm font-bold tracking-widest text-slate-100">DEALROOM</span>
+        <span class="block text-[10px] uppercase tracking-wider text-slate-500">Investment workspace</span>
+      </span>
+    </a>
+    <nav aria-label="Primary navigation" class="flex-1 space-y-1 px-3 py-5 text-xs uppercase tracking-wider">
+      <a href="#dashboard" class="block border-l-2 border-emerald-500 bg-slate-800 px-3 py-3 text-emerald-300">Dashboard</a>
+      <a href="#pipeline" class="block border-l-2 border-transparent px-3 py-3 text-slate-400 hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100">Pipeline</a>
+      <a href="#diligence" class="block border-l-2 border-transparent px-3 py-3 text-slate-400 hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100">Diligence</a>
+      <a href="#valuation" class="block border-l-2 border-transparent px-3 py-3 text-slate-400 hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100">Valuation</a>
+      <a href="#ai-insights" class="block border-l-2 border-transparent px-3 py-3 text-slate-400 hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100">AI Insights</a>
+      <a href="#settings" class="block border-l-2 border-transparent px-3 py-3 text-slate-400 hover:border-slate-500 hover:bg-slate-800 hover:text-slate-100">Settings</a>
+    </nav>
+    <div class="border-t-2 border-slate-700 px-5 py-4 text-[10px] uppercase tracking-wider text-slate-500">
+      DealRoom // Proprietary terminal
     </div>
-  </header>
+  </aside>
+
+  <div class="min-h-screen lg:ml-64">
+    <!-- Mobile navigation -->
+    <header class="sticky top-0 z-30 border-b-2 border-slate-700 bg-slate-900 no-print lg:hidden">
+      <div class="flex items-center justify-between gap-3 px-4 py-3">
+        <a href="#dashboard" class="flex items-center gap-2" aria-label="DealRoom dashboard">
+          <span class="grid h-8 w-8 place-items-center border-2 border-emerald-500 bg-emerald-900/30 font-bold text-emerald-300" aria-hidden="true">D</span>
+          <span class="text-xs font-bold tracking-widest text-slate-100">DEALROOM</span>
+        </a>
+        <span class="border border-amber-700 bg-amber-900/30 px-2 py-1 text-[9px] uppercase tracking-wider text-amber-300">Demo</span>
+      </div>
+      <nav aria-label="Mobile primary navigation" class="flex gap-1 overflow-x-auto border-t border-slate-800 px-3 py-2 text-[10px] uppercase tracking-wider">
+        <a href="#dashboard" class="shrink-0 px-3 py-2 text-emerald-300">Dashboard</a>
+        <a href="#pipeline" class="shrink-0 px-3 py-2 text-slate-400">Pipeline</a>
+        <a href="#diligence" class="shrink-0 px-3 py-2 text-slate-400">Diligence</a>
+        <a href="#valuation" class="shrink-0 px-3 py-2 text-slate-400">Valuation</a>
+        <a href="#ai-insights" class="shrink-0 px-3 py-2 text-slate-400">AI Insights</a>
+        <a href="#settings" class="shrink-0 px-3 py-2 text-slate-400">Settings</a>
+      </nav>
+    </header>
+
+    <!-- Header -->
+    <header class="border-b-2 border-slate-700 bg-slate-900 px-4 py-3 no-print">
+      <div class="max-w-7xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+          <span class="hidden sm:grid h-9 w-9 place-items-center border-2 border-emerald-500 bg-emerald-900/30 font-bold text-emerald-300" aria-hidden="true">D</span>
+          <div>
+            <h1 class="text-sm font-bold tracking-widest text-slate-100">DealRoom</h1>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">Proprietary investment terminal</p>
+          </div>
+          <span class="border border-amber-700 bg-amber-900/30 px-2 py-1 text-[9px] uppercase tracking-wider text-amber-300">Demo environment</span>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <div id="settings" class="flex items-center gap-2 scroll-mt-24">
+            <button
+              type="button"
+              @click="exportJson()"
+              class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
+            >
+              JSON Export
+            </button>
+            <button
+              type="button"
+              @click="importJson()"
+              class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
+            >
+              JSON Import
+            </button>
+          </div>
+          <span
+            class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 text-emerald-400"
+            x-text="status"
+          ></span>
+          <span class="grid h-10 w-10 place-items-center rounded-full border-2 border-slate-600 bg-slate-800 text-xs font-bold text-slate-200" role="img" aria-label="User avatar, Jordan Davis">JD</span>
+        </div>
+      </div>
+    </header>
 
   <!-- Main Grid -->
   <main class="max-w-7xl mx-auto p-4">
+    <section id="dashboard" aria-labelledby="dashboard-heading" class="mb-4 scroll-mt-24">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 id="dashboard-heading" class="text-lg font-bold tracking-wide text-slate-100">Portfolio overview</h2>
+          <p class="mt-1 text-xs text-slate-500">A quick view of your deal activity.</p>
+        </div>
+        <span class="border border-slate-700 bg-slate-800/70 px-2.5 py-1 text-[10px] uppercase tracking-wider text-slate-400">Sample Portfolio Snapshot</span>
+      </div>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <article class="border-2 border-slate-700 bg-slate-900 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500">Total Deal Value</h3>
+          <p class="mt-2 text-2xl font-bold text-slate-100">$24.8M</p>
+        </article>
+        <article class="border-2 border-slate-700 bg-slate-900 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500">Active Pipeline Deals</h3>
+          <p class="mt-2 text-2xl font-bold text-slate-100">12</p>
+        </article>
+        <article class="border-2 border-slate-700 bg-slate-900 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500">Closed Transactions</h3>
+          <p class="mt-2 text-2xl font-bold text-slate-100">38</p>
+        </article>
+        <article class="border-2 border-slate-700 bg-slate-900 p-4">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-500">Average LTV</h3>
+          <p class="mt-2 text-2xl font-bold text-slate-100">61.2%</p>
+        </article>
+      </div>
+      <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <article class="border-2 border-slate-700 bg-slate-900 p-4">
+          <div class="mb-3 flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-widest text-slate-300">Deal Value Allocation by Sector</h3>
+              <p class="mt-1 text-[10px] text-slate-500">Illustrative portfolio mix · value in $M</p>
+            </div>
+            <span class="border border-slate-700 bg-slate-800 px-2 py-1 text-[9px] uppercase tracking-wider text-slate-500">Sample data</span>
+          </div>
+          <div class="relative h-64 w-full">
+            <canvas id="sector-allocation-chart" role="img" aria-label="Bar chart of illustrative deal value allocation: Tech 8.4 million dollars, Healthcare 5.7 million dollars, Real Estate 7.2 million dollars, and Energy 3.5 million dollars">
+              Deal value by sector: Tech $8.4M, Healthcare $5.7M, Real Estate $7.2M, Energy $3.5M.
+            </canvas>
+          </div>
+        </article>
+        <article class="border-2 border-slate-700 bg-slate-900 p-4">
+          <div class="mb-3 flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-widest text-slate-300">Monthly Closed Deal Volume</h3>
+              <p class="mt-1 text-[10px] text-slate-500">Trailing 12 months · illustrative sample deals</p>
+            </div>
+            <span class="border border-slate-700 bg-slate-800 px-2 py-1 text-[9px] uppercase tracking-wider text-slate-500">Sample data</span>
+          </div>
+          <div class="relative h-64 w-full">
+            <canvas id="closed-volume-chart" role="img" aria-label="Line chart of illustrative monthly closed deal volume over the trailing 12 months, from November 2025 through October 2026">
+              Monthly closed deal counts from November 2025 through October 2026: 2, 3, 2, 4, 3, 5, 4, 3, 6, 4, 5, 7.
+            </canvas>
+          </div>
+        </article>
+      </div>
+    </section>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 module-underwriting-crm">
 
       <!-- Left Column: Module 1 — Underwriting Desk -->
-      <section class="border-2 border-slate-700 bg-slate-900 p-4 space-y-4">
+      <section id="diligence" aria-label="Deal diligence and underwriting" class="border-2 border-slate-700 bg-slate-900 p-4 space-y-4 scroll-mt-24">
         <h2 class="text-xs uppercase tracking-widest text-slate-400 border-b-2 border-slate-700 pb-2">
           // Module 1 — Underwriting Desk
         </h2>
@@ -846,13 +957,154 @@
       </section>
     </div>
 
+    <section id="valuation" aria-labelledby="valuation-heading" class="mt-4 border-2 border-slate-700 bg-slate-900 p-4 space-y-4 scroll-mt-24">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="valuation-heading" class="text-sm font-bold uppercase tracking-widest text-slate-200">AI Valuation Calculator</h2>
+          <p class="mt-1 text-xs text-slate-500">Model-assisted estimate using revenue, margin, growth, and debt assumptions.</p>
+        </div>
+        <span class="border border-violet-800 bg-violet-900/30 px-2 py-1 text-[10px] uppercase tracking-wider text-violet-300">Illustrative estimate</span>
+      </div>
+
+      <form id="valuation-form" class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Valuation assumptions">
+        <label class="block border border-slate-700 bg-slate-800/60 p-3">
+          <span class="mb-2 block text-[10px] uppercase tracking-wider text-slate-400">Annual Revenue ($M)</span>
+          <input id="valuation-revenue" name="revenue" type="number" min="0.01" max="1000000" step="0.1" value="24.8" required class="w-full border-2 border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-900" />
+        </label>
+        <label class="block border border-slate-700 bg-slate-800/60 p-3">
+          <span class="mb-2 block text-[10px] uppercase tracking-wider text-slate-400">EBITDA Margin (%)</span>
+          <input id="valuation-margin" name="margin" type="number" min="0" max="100" step="0.1" value="18" required class="w-full border-2 border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-900" />
+        </label>
+        <label class="block border border-slate-700 bg-slate-800/60 p-3">
+          <span class="mb-2 block text-[10px] uppercase tracking-wider text-slate-400">Growth Rate (%)</span>
+          <input id="valuation-growth" name="growth" type="number" min="-100" max="1000" step="0.1" value="8" required class="w-full border-2 border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-900" />
+        </label>
+        <label class="block border border-slate-700 bg-slate-800/60 p-3">
+          <span class="mb-2 block text-[10px] uppercase tracking-wider text-slate-400">Debt Level ($M)</span>
+          <input id="valuation-debt" name="debt" type="number" min="0" max="1000000" step="0.1" value="12" required class="w-full border-2 border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-900" />
+        </label>
+      </form>
+
+      <div id="valuation-results" class="space-y-3" aria-live="polite" aria-atomic="true">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <article class="border-2 border-emerald-900 bg-emerald-950/30 p-4">
+            <h3 class="text-[10px] uppercase tracking-widest text-emerald-400">Estimated Enterprise Value</h3>
+            <p id="valuation-ev" class="mt-2 text-2xl font-bold text-slate-100">$0.0M</p>
+            <p class="mt-1 text-[10px] text-slate-500">Revenue × (EBITDA margin ÷ 10) × growth multiplier</p>
+          </article>
+          <article class="border-2 border-slate-700 bg-slate-800/60 p-4">
+            <h3 class="text-[10px] uppercase tracking-widest text-slate-400">Recommended Bid Range</h3>
+            <p id="valuation-bid" class="mt-2 text-xl font-bold text-slate-100">$0.0M – $0.0M</p>
+            <p class="mt-1 text-[10px] text-slate-500">Indicative 85%–95% of estimated EV</p>
+          </article>
+          <article class="border-2 border-slate-700 bg-slate-800/60 p-4">
+            <h3 class="text-[10px] uppercase tracking-widest text-slate-400">Debt-to-EV Risk</h3>
+            <p class="mt-2 flex items-center gap-2">
+              <span id="valuation-risk-dot" class="h-2.5 w-2.5 rounded-full bg-slate-500" aria-hidden="true"></span>
+              <span id="valuation-risk" class="text-xl font-bold text-slate-100">—</span>
+              <span id="valuation-debt-ratio" class="text-xs text-slate-400"></span>
+            </p>
+            <p class="mt-1 text-[10px] text-slate-500">Low ≤ 30% · Moderate ≤ 60% · High &gt; 60%</p>
+          </article>
+        </div>
+        <div class="border border-slate-700 bg-slate-800/50 p-3">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-400">Automated Risk Summary</h3>
+          <ul id="valuation-flags" class="mt-2 flex flex-wrap gap-2 text-[10px]" aria-label="Valuation risk flags"></ul>
+        </div>
+        <p class="text-[10px] leading-relaxed text-slate-500">Planning estimate only, not an appraisal, offer, or investment advice. The growth multiplier is 1 + growth rate; validate assumptions with independent financial and diligence review.</p>
+      </div>
+    </section>
+
     <!-- Module 3 — Kanban Pipeline & Contract Desk -->
-    <section class="mt-4 border-2 border-slate-700 bg-slate-900 p-4 space-y-4 module-3-section">
+    <section id="pipeline" class="mt-4 border-2 border-slate-700 bg-slate-900 p-4 space-y-4 module-3-section scroll-mt-24">
       <h2 class="text-xs uppercase tracking-widest text-slate-400 border-b-2 border-slate-700 pb-2 no-print">
         // Module 3 — Kanban Pipeline &amp; Contract Desk
       </h2>
 
-      <!-- Kanban Board -->
+      <!-- Interactive deal pipeline -->
+      <div class="deal-pipeline-board no-print space-y-3">
+        <div class="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-200">Deal Pipeline</h3>
+            <p class="mt-1 text-[10px] text-slate-500">Select a deal to review its details, diligence, and contacts.</p>
+          </div>
+          <span class="border border-slate-700 bg-slate-800 px-2 py-1 text-[10px] uppercase tracking-wider text-slate-400">Sample deals</span>
+        </div>
+        <div class="flex gap-3 overflow-x-auto pb-3" aria-label="Deal pipeline stages">
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-sourcing">
+            <h4 id="stage-sourcing" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Sourcing <span class="text-[10px] font-normal text-slate-500" data-stage-count="Sourcing"></span>
+            </h4>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Sourcing"></div>
+          </section>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-initial-review">
+            <h4 id="stage-initial-review" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Initial Review <span class="text-[10px] font-normal text-slate-500" data-stage-count="Initial Review"></span>
+            </h4>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Initial Review"></div>
+          </section>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-due-diligence">
+            <h4 id="stage-due-diligence" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Due Diligence <span class="text-[10px] font-normal text-slate-500" data-stage-count="Due Diligence"></span>
+            </h4>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Due Diligence"></div>
+          </section>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-term-sheet">
+            <h4 id="stage-term-sheet" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Term Sheet <span class="text-[10px] font-normal text-slate-500" data-stage-count="Term Sheet"></span>
+            </h4>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Term Sheet"></div>
+          </section>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-closed">
+            <h4 id="stage-closed" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Closed <span class="text-[10px] font-normal text-slate-500" data-stage-count="Closed"></span>
+            </h4>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Closed"></div>
+          </section>
+        </div>
+      </div>
+
+      <div id="deal-detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="deal-modal-title" aria-describedby="deal-modal-summary">
+        <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto border-2 border-slate-600 bg-slate-900 shadow-2xl">
+          <div class="sticky top-0 flex items-start justify-between gap-4 border-b-2 border-slate-700 bg-slate-900 p-4">
+            <div>
+              <p id="deal-modal-stage" class="text-[10px] uppercase tracking-widest text-emerald-400"></p>
+              <h3 id="deal-modal-title" class="mt-1 text-lg font-bold text-slate-100"></h3>
+            </div>
+            <button id="deal-modal-close" type="button" class="grid h-10 w-10 shrink-0 place-items-center border border-slate-600 text-xl text-slate-300 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" aria-label="Close deal details">&times;</button>
+          </div>
+          <div class="space-y-5 p-4">
+            <p id="deal-modal-summary" class="text-sm leading-relaxed text-slate-300"></p>
+            <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div class="border border-slate-700 bg-slate-800/60 p-3"><dt class="text-[10px] uppercase tracking-wider text-slate-500">Sector</dt><dd id="deal-modal-sector" class="mt-1 text-sm text-slate-200"></dd></div>
+              <div class="border border-slate-700 bg-slate-800/60 p-3"><dt class="text-[10px] uppercase tracking-wider text-slate-500">Transaction Size</dt><dd id="deal-modal-size" class="mt-1 text-sm text-slate-200"></dd></div>
+              <div class="border border-slate-700 bg-slate-800/60 p-3"><dt class="text-[10px] uppercase tracking-wider text-slate-500">Lead Partner</dt><dd id="deal-modal-partner" class="mt-1 text-sm text-slate-200"></dd></div>
+              <div class="border border-slate-700 bg-slate-800/60 p-3"><dt class="text-[10px] uppercase tracking-wider text-slate-500">Target Close</dt><dd id="deal-modal-close-date" class="mt-1 text-sm text-slate-200"></dd></div>
+            </dl>
+            <section aria-labelledby="deal-modal-diligence-heading" class="space-y-3">
+              <div class="flex items-center justify-between gap-3">
+                <h4 id="deal-modal-diligence-heading" class="text-xs font-bold uppercase tracking-wider text-slate-300">Diligence progress</h4>
+                <span id="deal-modal-progress-label" class="text-xs text-emerald-400"></span>
+              </div>
+              <div class="h-2 overflow-hidden bg-slate-700">
+                <div id="deal-modal-progress-bar" class="h-full bg-emerald-500 transition-all"></div>
+              </div>
+              <ul id="deal-modal-checklist" class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2"></ul>
+            </section>
+            <section aria-labelledby="deal-modal-contact-heading" class="border-t border-slate-700 pt-4">
+              <h4 id="deal-modal-contact-heading" class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-300">Deal contact</h4>
+              <p id="deal-modal-contact-name" class="text-sm font-bold text-slate-200"></p>
+              <p id="deal-modal-contact-role" class="text-xs text-slate-500"></p>
+              <div class="mt-2 flex flex-wrap gap-x-5 gap-y-2 text-xs">
+                <a id="deal-modal-contact-email" class="text-emerald-400 underline underline-offset-2" rel="noopener"></a>
+                <a id="deal-modal-contact-phone" class="text-emerald-400 underline underline-offset-2"></a>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- Existing single-deal stage controls -->
       <div class="kanban-board no-print">
         <h3 class="text-xs uppercase tracking-widest text-slate-500 mb-3">// Pipeline Tracker</h3>
         <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
@@ -995,7 +1247,7 @@
       </h2>
 
       <!-- Negotiation Decision Matrix -->
-      <div class="space-y-2">
+      <div id="ai-insights" aria-label="Negotiation insights" class="space-y-2 scroll-mt-24">
         <h3 class="text-xs uppercase tracking-widest text-slate-500">// Negotiation Decision Matrix</h3>
         <div
           class="border-2 px-3 py-2 flex items-center justify-between gap-2"
@@ -1158,6 +1410,7 @@
     </section>
 
   </main>
+  </div>
 
   <script>
     /** Phase 3 — USD formatter for immutable contract snapshots */
@@ -3144,6 +3397,513 @@
         },
       };
     }
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sectorCanvas = document.getElementById('sector-allocation-chart');
+      const volumeCanvas = document.getElementById('closed-volume-chart');
+      if (!sectorCanvas || !volumeCanvas) return;
+
+      if (typeof Chart === 'undefined') {
+        [sectorCanvas, volumeCanvas].forEach((canvas) => {
+          const fallback = document.createElement('p');
+          fallback.className = 'p-4 text-xs text-amber-300';
+          fallback.textContent = 'Charts are unavailable because the Chart.js library could not be loaded.';
+          canvas.replaceWith(fallback);
+        });
+        return;
+      }
+
+      const chartTextColor = '#cbd5e1';
+      const chartGridColor = 'rgba(148, 163, 184, 0.15)';
+      const chartFont = { family: 'monospace' };
+      const sectorValues = [8.4, 5.7, 7.2, 3.5];
+      const monthLabels = [
+        'Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026',
+        'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026',
+        'Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026',
+      ];
+
+      new Chart(sectorCanvas, {
+        type: 'bar',
+        data: {
+          labels: ['Tech', 'Healthcare', 'Real Estate', 'Energy'],
+          datasets: [{
+            label: 'Deal value ($M)',
+            data: sectorValues,
+            backgroundColor: ['rgba(56, 189, 248, 0.65)', 'rgba(167, 139, 250, 0.65)', 'rgba(52, 211, 153, 0.65)', 'rgba(251, 191, 36, 0.65)'],
+            borderColor: ['#38bdf8', '#a78bfa', '#34d399', '#fbbf24'],
+            borderWidth: 1,
+            borderRadius: 2,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: chartTextColor, font: chartFont } },
+            tooltip: { callbacks: { label: (context) => ' $' + context.parsed.y.toFixed(1) + 'M' } },
+          },
+          scales: {
+            x: { ticks: { color: chartTextColor, font: chartFont }, grid: { color: chartGridColor } },
+            y: {
+              beginAtZero: true,
+              ticks: { color: chartTextColor, font: chartFont, callback: (value) => '$' + value + 'M' },
+              grid: { color: chartGridColor },
+            },
+          },
+        },
+      });
+
+      new Chart(volumeCanvas, {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            label: 'Closed deals',
+            data: [2, 3, 2, 4, 3, 5, 4, 3, 6, 4, 5, 7],
+            borderColor: '#34d399',
+            backgroundColor: 'rgba(52, 211, 153, 0.12)',
+            pointBackgroundColor: '#6ee7b7',
+            pointBorderColor: '#0f172a',
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: chartTextColor, font: chartFont } },
+            tooltip: { callbacks: { label: (context) => ' ' + context.parsed.y + ' closed deals' } },
+          },
+          scales: {
+            x: {
+              ticks: { color: chartTextColor, font: chartFont, maxRotation: 45, minRotation: 45 },
+              grid: { color: chartGridColor },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: chartTextColor, font: chartFont, precision: 0, stepSize: 1 },
+              grid: { color: chartGridColor },
+            },
+          },
+        },
+      });
+    });
+  </script>
+  <script>
+    (() => {
+      const deals = [
+        {
+          name: 'Cedar Grove Apartments',
+          sector: 'Multifamily',
+          size: 18.4,
+          partner: 'Jordan Davis',
+          stage: 'Sourcing',
+          status: 'New lead',
+          statusTone: 'border-sky-700 bg-sky-900/30 text-sky-300',
+          targetClose: 'Q1 2027',
+          summary: 'A 164-unit garden-style community with a value-add renovation opportunity near a growing employment corridor.',
+          diligence: [
+            { label: 'Initial broker materials', complete: true },
+            { label: 'Rent roll received', complete: false },
+            { label: 'Property tour', complete: false },
+            { label: 'Underwriting review', complete: false },
+          ],
+          contact: { name: 'Morgan Lee', role: 'Broker, Northstar Realty', email: 'morgan.lee@example.com', phone: '+1 (202) 555-0101' },
+        },
+        {
+          name: 'Harbor Point Logistics',
+          sector: 'Industrial',
+          size: 32.0,
+          partner: 'Avery Chen',
+          stage: 'Sourcing',
+          status: 'Outreach',
+          statusTone: 'border-sky-700 bg-sky-900/30 text-sky-300',
+          targetClose: 'Q2 2027',
+          summary: 'A modern last-mile distribution facility positioned to serve the regional port and expanding metro area.',
+          diligence: [
+            { label: 'Investment teaser reviewed', complete: true },
+            { label: 'Ownership contacted', complete: true },
+            { label: 'Operating history', complete: false },
+            { label: 'Site inspection', complete: false },
+          ],
+          contact: { name: 'Taylor Brooks', role: 'Managing Director, Harborstone Capital', email: 'taylor.brooks@example.com', phone: '+1 (202) 555-0102' },
+        },
+        {
+          name: 'Juniper Medical Plaza',
+          sector: 'Healthcare',
+          size: 12.7,
+          partner: 'Morgan Patel',
+          stage: 'Initial Review',
+          status: 'Screening',
+          statusTone: 'border-violet-700 bg-violet-900/30 text-violet-300',
+          targetClose: 'Q1 2027',
+          summary: 'A fully leased outpatient medical office building with long-term tenant relationships and stable cash flow.',
+          diligence: [
+            { label: 'Offering memorandum', complete: true },
+            { label: 'Lease abstracts', complete: true },
+            { label: 'Tenant credit review', complete: false },
+            { label: 'Preliminary valuation', complete: false },
+          ],
+          contact: { name: 'Jamie Rivera', role: 'Healthcare Investment Sales, Meridian Partners', email: 'jamie.rivera@example.com', phone: '+1 (202) 555-0103' },
+        },
+        {
+          name: 'Westlake Commons',
+          sector: 'Multifamily',
+          size: 21.5,
+          partner: 'Jordan Davis',
+          stage: 'Initial Review',
+          status: 'Underwriting',
+          statusTone: 'border-violet-700 bg-violet-900/30 text-violet-300',
+          targetClose: 'Q2 2027',
+          summary: 'A 208-unit suburban community with a potential operating lift through targeted unit upgrades and amenity improvements.',
+          diligence: [
+            { label: 'T12 financials', complete: true },
+            { label: 'Rent comps', complete: true },
+            { label: 'Renovation budget', complete: true },
+            { label: 'Investment committee memo', complete: false },
+          ],
+          contact: { name: 'Riley Thompson', role: 'Senior Associate, Westlake Advisory', email: 'riley.thompson@example.com', phone: '+1 (202) 555-0104' },
+        },
+        {
+          name: 'Pine Ridge Student Living',
+          sector: 'Student Housing',
+          size: 27.3,
+          partner: 'Avery Chen',
+          stage: 'Due Diligence',
+          status: 'In diligence',
+          statusTone: 'border-amber-700 bg-amber-900/30 text-amber-300',
+          targetClose: 'Dec 2026',
+          summary: 'Purpose-built student housing near a major public university, with a re-leasing plan focused on pre-leasing and resident experience.',
+          diligence: [
+            { label: 'Financial and tax review', complete: true },
+            { label: 'Physical property inspection', complete: true },
+            { label: 'Environmental assessment', complete: true },
+            { label: 'Legal and title review', complete: false },
+          ],
+          contact: { name: 'Casey Nguyen', role: 'Principal, Campus Property Advisors', email: 'casey.nguyen@example.com', phone: '+1 (202) 555-0105' },
+        },
+        {
+          name: 'Foundry District Offices',
+          sector: 'Office',
+          size: 16.8,
+          partner: 'Morgan Patel',
+          stage: 'Due Diligence',
+          status: 'Site review',
+          statusTone: 'border-amber-700 bg-amber-900/30 text-amber-300',
+          targetClose: 'Jan 2027',
+          summary: 'A renovated creative office campus with a diversified tenant roster and attractive basis relative to replacement cost.',
+          diligence: [
+            { label: 'Lease and estoppel review', complete: true },
+            { label: 'Building systems assessment', complete: true },
+            { label: 'Environmental report', complete: false },
+            { label: 'Lender appraisal', complete: false },
+          ],
+          contact: { name: 'Drew Williams', role: 'Director, Foundry Commercial', email: 'drew.williams@example.com', phone: '+1 (202) 555-0106' },
+        },
+        {
+          name: 'Summit Self Storage',
+          sector: 'Self Storage',
+          size: 9.6,
+          partner: 'Jordan Davis',
+          stage: 'Term Sheet',
+          status: 'Negotiating',
+          statusTone: 'border-orange-700 bg-orange-900/30 text-orange-300',
+          targetClose: 'Nov 2026',
+          summary: 'A climate-controlled storage portfolio with expansion capacity and opportunities to improve digital leasing.',
+          diligence: [
+            { label: 'Operations review', complete: true },
+            { label: 'Phase I environmental', complete: true },
+            { label: 'Financing terms', complete: true },
+            { label: 'Purchase agreement', complete: false },
+          ],
+          contact: { name: 'Alex Morgan', role: 'Partner, Summit Property Group', email: 'alex.morgan@example.com', phone: '+1 (202) 555-0107' },
+        },
+        {
+          name: 'Lakeside Distribution Center',
+          sector: 'Industrial',
+          size: 41.2,
+          partner: 'Avery Chen',
+          stage: 'Term Sheet',
+          status: 'LOI submitted',
+          statusTone: 'border-orange-700 bg-orange-900/30 text-orange-300',
+          targetClose: 'Feb 2027',
+          summary: 'A regional distribution hub with strong highway access and a proposed long-term leaseback from the seller.',
+          diligence: [
+            { label: 'Tenant credit review', complete: true },
+            { label: 'Property condition report', complete: true },
+            { label: 'Financing proposal', complete: false },
+            { label: 'Final terms approval', complete: false },
+          ],
+          contact: { name: 'Sam Ellis', role: 'Managing Broker, Lakeside CRE', email: 'sam.ellis@example.com', phone: '+1 (202) 555-0108' },
+        },
+        {
+          name: 'Maple Street Residences',
+          sector: 'Multifamily',
+          size: 14.2,
+          partner: 'Morgan Patel',
+          stage: 'Closed',
+          status: 'Closed · Oct 2026',
+          statusTone: 'border-emerald-700 bg-emerald-900/30 text-emerald-300',
+          targetClose: 'Oct 2026',
+          summary: 'A 96-unit urban infill acquisition completed after a focused renovation and operating efficiency plan.',
+          diligence: [
+            { label: 'Financial and legal review', complete: true },
+            { label: 'Property inspections', complete: true },
+            { label: 'Financing finalized', complete: true },
+            { label: 'Closing documents executed', complete: true },
+          ],
+          contact: { name: 'Robin Foster', role: 'Acquisitions Director, Maple Street Partners', email: 'robin.foster@example.com', phone: '+1 (202) 555-0109' },
+        },
+        {
+          name: 'Canyon View Retail',
+          sector: 'Retail',
+          size: 7.8,
+          partner: 'Jordan Davis',
+          stage: 'Closed',
+          status: 'Closed · Sep 2026',
+          statusTone: 'border-emerald-700 bg-emerald-900/30 text-emerald-300',
+          targetClose: 'Sep 2026',
+          summary: 'A neighborhood retail center anchored by essential-service tenants and supported by durable local demand.',
+          diligence: [
+            { label: 'Lease audit', complete: true },
+            { label: 'Property condition report', complete: true },
+            { label: 'Title and survey', complete: true },
+            { label: 'Closing completed', complete: true },
+          ],
+          contact: { name: 'Dana Kim', role: 'Vice President, Canyon Retail Advisors', email: 'dana.kim@example.com', phone: '+1 (202) 555-0110' },
+        },
+      ];
+
+      const createTextElement = (tagName, className, text) => {
+        const element = document.createElement(tagName);
+        element.className = className;
+        element.textContent = text;
+        return element;
+      };
+
+      deals.forEach((deal, index) => {
+        const column = document.querySelector('[data-pipeline-stage="' + deal.stage + '"]');
+        if (!column) return;
+
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.dataset.dealIndex = String(index);
+        card.className = 'block w-full border border-slate-700 bg-slate-900 p-3 text-left transition-colors hover:border-emerald-700 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500';
+        card.setAttribute('aria-haspopup', 'dialog');
+        card.setAttribute('aria-label', 'View deal: ' + deal.name);
+        card.append(
+          createTextElement('span', 'block text-xs font-bold text-slate-100', deal.name),
+          createTextElement('span', 'mt-2 block text-[10px] text-slate-400', deal.sector),
+          createTextElement('span', 'mt-1 block text-sm font-bold text-slate-200', '$' + deal.size.toFixed(1) + 'M'),
+        );
+
+        const footer = document.createElement('span');
+        footer.className = 'mt-3 flex items-center justify-between gap-2 border-t border-slate-800 pt-2';
+        footer.append(
+          createTextElement('span', 'min-w-0 truncate text-[10px] text-slate-500', deal.partner),
+          createTextElement('span', 'shrink-0 border px-1.5 py-1 text-[9px] uppercase tracking-wide ' + deal.statusTone, deal.status),
+        );
+        card.append(footer);
+        column.append(card);
+      });
+
+      document.querySelectorAll('[data-stage-count]').forEach((count) => {
+        const stage = count.dataset.stageCount;
+        const stageDeals = deals.filter((deal) => deal.stage === stage).length;
+        count.textContent = stageDeals + (stageDeals === 1 ? ' deal' : ' deals');
+      });
+
+      const modal = document.getElementById('deal-detail-modal');
+      const closeButton = document.getElementById('deal-modal-close');
+      let lastFocusedCard = null;
+      let previousBodyOverflow = '';
+
+      const setText = (id, value) => {
+        document.getElementById(id).textContent = value;
+      };
+
+      const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = previousBodyOverflow;
+        if (lastFocusedCard) lastFocusedCard.focus();
+      };
+
+      const openModal = (deal, card) => {
+        lastFocusedCard = card;
+        previousBodyOverflow = document.body.style.overflow;
+        setText('deal-modal-stage', deal.stage + ' · ' + deal.status);
+        setText('deal-modal-title', deal.name);
+        setText('deal-modal-summary', deal.summary);
+        setText('deal-modal-sector', deal.sector);
+        setText('deal-modal-size', '$' + deal.size.toFixed(1) + 'M');
+        setText('deal-modal-partner', deal.partner);
+        setText('deal-modal-close-date', deal.targetClose);
+        setText('deal-modal-contact-name', deal.contact.name);
+        setText('deal-modal-contact-role', deal.contact.role);
+
+        const email = document.getElementById('deal-modal-contact-email');
+        email.href = 'mailto:' + deal.contact.email;
+        email.textContent = deal.contact.email;
+        const phone = document.getElementById('deal-modal-contact-phone');
+        phone.href = 'tel:' + deal.contact.phone.replace(/[^\d+]/g, '');
+        phone.textContent = deal.contact.phone;
+
+        const completed = deal.diligence.filter((item) => item.complete).length;
+        const progress = Math.round((completed / deal.diligence.length) * 100);
+        const progressBar = document.getElementById('deal-modal-progress-bar');
+        progressBar.style.width = progress + '%';
+        progressBar.setAttribute('role', 'progressbar');
+        progressBar.setAttribute('aria-valuemin', '0');
+        progressBar.setAttribute('aria-valuemax', '100');
+        progressBar.setAttribute('aria-valuenow', String(progress));
+        progressBar.setAttribute('aria-label', 'Diligence completion');
+        setText('deal-modal-progress-label', progress + '% complete');
+
+        const checklist = document.getElementById('deal-modal-checklist');
+        checklist.replaceChildren();
+        deal.diligence.forEach((item) => {
+          const row = document.createElement('li');
+          row.className = 'flex items-center gap-2 border border-slate-700 bg-slate-800/60 px-2 py-2';
+          row.append(
+            createTextElement('span', item.complete ? 'text-emerald-400' : 'text-slate-600', item.complete ? '✓' : '○'),
+            createTextElement('span', item.complete ? 'text-slate-300' : 'text-slate-500', item.label),
+          );
+          checklist.append(row);
+        });
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        closeButton.focus();
+      };
+
+      document.querySelectorAll('[data-pipeline-stage] [data-deal-index]').forEach((card) => {
+        card.addEventListener('click', () => {
+          const deal = deals[Number(card.dataset.dealIndex)];
+          if (deal) openModal(deal, card);
+        });
+      });
+
+      closeButton.addEventListener('click', closeModal);
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+      });
+      modal.addEventListener('keydown', (event) => {
+        if (event.key !== 'Tab') return;
+        const focusable = Array.from(modal.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ));
+        if (!focusable.length) {
+          event.preventDefault();
+          return;
+        }
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+      });
+    })();
+  </script>
+  <script>
+    (() => {
+      const form = document.getElementById('valuation-form');
+      if (!form) return;
+
+      const revenueInput = document.getElementById('valuation-revenue');
+      const marginInput = document.getElementById('valuation-margin');
+      const growthInput = document.getElementById('valuation-growth');
+      const debtInput = document.getElementById('valuation-debt');
+      const flagsList = document.getElementById('valuation-flags');
+      const formatMillions = (value) => '$' + value.toLocaleString('en-US', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }) + 'M';
+
+      const renderFlag = (text, tone) => {
+        const flag = document.createElement('li');
+        flag.className = 'border px-2 py-1 ' + tone;
+        flag.textContent = text;
+        flagsList.append(flag);
+      };
+
+      const calculateValuation = () => {
+        flagsList.replaceChildren();
+        if (!form.checkValidity()) {
+          document.getElementById('valuation-ev').textContent = 'Check inputs';
+          document.getElementById('valuation-bid').textContent = '—';
+          document.getElementById('valuation-risk').textContent = '—';
+          document.getElementById('valuation-debt-ratio').textContent = '';
+          document.getElementById('valuation-risk-dot').className = 'h-2.5 w-2.5 rounded-full bg-slate-500';
+          renderFlag('Enter valid values within the indicated ranges.', 'border-amber-800 bg-amber-900/20 text-amber-300');
+          return;
+        }
+
+        const revenue = Number(revenueInput.value);
+        const margin = Number(marginInput.value);
+        const growth = Number(growthInput.value);
+        const debt = Number(debtInput.value);
+        const growthMultiplier = 1 + growth / 100;
+        const enterpriseValue = revenue * (margin / 10) * growthMultiplier;
+        const debtRatio = enterpriseValue > 0 ? debt / enterpriseValue : (debt > 0 ? Infinity : 0);
+        const riskLevel = debtRatio <= 0.3 ? 'Low' : (debtRatio <= 0.6 ? 'Moderate' : 'High');
+        const riskStyles = {
+          Low: { text: 'text-emerald-400', dot: 'bg-emerald-400' },
+          Moderate: { text: 'text-amber-300', dot: 'bg-amber-400' },
+          High: { text: 'text-red-400', dot: 'bg-red-400' },
+        };
+
+        document.getElementById('valuation-ev').textContent = formatMillions(enterpriseValue);
+        document.getElementById('valuation-bid').textContent =
+          formatMillions(enterpriseValue * 0.85) + ' – ' + formatMillions(enterpriseValue * 0.95);
+        const riskLabel = document.getElementById('valuation-risk');
+        riskLabel.textContent = riskLevel;
+        riskLabel.className = 'text-xl font-bold ' + riskStyles[riskLevel].text;
+        document.getElementById('valuation-risk-dot').className =
+          'h-2.5 w-2.5 rounded-full ' + riskStyles[riskLevel].dot;
+        document.getElementById('valuation-debt-ratio').textContent =
+          Number.isFinite(debtRatio) ? '(' + (debtRatio * 100).toFixed(1) + '% of EV)' : '(EV is zero)';
+
+        if (riskLevel === 'High') {
+          renderFlag('High leverage: debt exceeds 60% of estimated EV.', 'border-red-800 bg-red-900/20 text-red-300');
+        } else if (riskLevel === 'Moderate') {
+          renderFlag('Moderate leverage: monitor debt relative to estimated EV.', 'border-amber-800 bg-amber-900/20 text-amber-300');
+        }
+        if (margin < 10) {
+          renderFlag('Low EBITDA margin: below 10% may constrain debt service and valuation.', 'border-amber-800 bg-amber-900/20 text-amber-300');
+        }
+        if (growth < 0) {
+          renderFlag('Negative growth assumption reduces estimated enterprise value.', 'border-red-800 bg-red-900/20 text-red-300');
+        }
+        if (enterpriseValue <= 0) {
+          renderFlag('Non-positive estimated EV: review margin and growth assumptions.', 'border-red-800 bg-red-900/20 text-red-300');
+        }
+        if (!flagsList.children.length) {
+          renderFlag('No elevated risk flags from the entered assumptions.', 'border-emerald-800 bg-emerald-900/20 text-emerald-300');
+        }
+      };
+
+      form.addEventListener('input', calculateValuation);
+      form.addEventListener('submit', (event) => event.preventDefault());
+      calculateValuation();
+    })();
   </script>
 </body>
 </html>
