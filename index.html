@@ -1,0 +1,3149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DealRoom</title>
+  <script>
+    (function () {
+      var originalWarn = console.warn.bind(console);
+      console.warn = function () {
+        for (var i = 0; i < arguments.length; i++) {
+          if (typeof arguments[i] === 'string' && arguments[i].indexOf('cdn.tailwindcss.com') !== -1) {
+            return;
+          }
+        }
+        originalWarn.apply(console, arguments);
+      };
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            terminal: '#0f172a',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    .flash-parsed {
+      border-color: #059669 !important;
+      box-shadow: 0 0 0 1px #059669;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .glow-amber {
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+      animation: pulse-amber 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse-amber {
+      0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.35); }
+      50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.65); }
+    }
+
+    /* Phase 3 — Print: clean white contracts / wire instructions only */
+    @media print {
+      @page {
+        margin: 0.6in;
+      }
+
+      html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: "Courier New", Courier, monospace !important;
+      }
+
+      .no-print,
+      header,
+      button,
+      .kanban-board,
+      .module-underwriting-crm {
+        display: none !important;
+      }
+
+      main {
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .module-3-section,
+      .contract-desk,
+      .contract-desk * {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border-color: #000000 !important;
+        box-shadow: none !important;
+      }
+
+      .contract-desk {
+        display: block !important;
+      }
+
+      .contract-desk .contract-grid {
+        display: block !important;
+      }
+
+      .contract-desk .contract-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 1.25rem;
+        border: 1px solid #000 !important;
+        padding: 0.75rem !important;
+      }
+
+      .contract-desk textarea {
+        border: none !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        white-space: pre-wrap !important;
+        font-size: 11pt !important;
+        color: #000 !important;
+        background: #fff !important;
+        resize: none !important;
+      }
+
+      .wire-instructions {
+        display: block !important;
+        border: 1px solid #000 !important;
+        padding: 0.75rem !important;
+        margin-top: 1rem;
+        color: #000 !important;
+        background: #fff !important;
+      }
+
+      .contract-desk h2,
+      .contract-desk h3,
+      .contract-desk .contract-label {
+        color: #000 !important;
+      }
+    }
+
+    .wire-instructions {
+      display: none;
+    }
+
+    .border-derived {
+      border-color: #d97706 !important;
+      box-shadow: 0 0 0 1px #d97706;
+    }
+  </style>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-terminal text-slate-200 font-mono min-h-screen" x-data="dealRoomApp()">
+
+  <!-- Header -->
+  <header class="border-b-2 border-slate-700 bg-slate-900 px-4 py-3 no-print">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <h1 class="text-sm sm:text-base font-bold tracking-widest text-slate-100 uppercase">
+        DEALROOM // PROPRIETARY TERMINAL
+      </h1>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          @click="exportJson()"
+          class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
+        >
+          JSON Export
+        </button>
+        <button
+          type="button"
+          @click="importJson()"
+          class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
+        >
+          JSON Import
+        </button>
+        <span
+          class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 text-emerald-400"
+          x-text="status"
+        ></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <main class="max-w-7xl mx-auto p-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 module-underwriting-crm">
+
+      <!-- Left Column: Module 1 — Underwriting Desk -->
+      <section class="border-2 border-slate-700 bg-slate-900 p-4 space-y-4">
+        <h2 class="text-xs uppercase tracking-widest text-slate-400 border-b-2 border-slate-700 pb-2">
+          // Module 1 — Underwriting Desk
+        </h2>
+
+        <!-- Module 4 — Unstructured Data Parser -->
+        <div class="border-2 border-slate-700 bg-slate-800 p-3 space-y-2">
+          <h3 class="text-xs uppercase tracking-widest text-slate-500">
+            // Module 4 — Unstructured Data Parser
+          </h3>
+          <textarea
+            x-model="rawIngestionText"
+            rows="5"
+            placeholder="Paste MLS snippet, listing email, or off-market text...&#10;e.g. List Price: $164,000 | ARV 240k | Rehab $28,500 | Rent $1,250 | ZIP 38118"
+            class="w-full bg-slate-900 border-2 border-slate-700 px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 resize-y min-h-[96px]"
+          ></textarea>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              @click="parseRawText()"
+              class="flex-1 px-3 py-2 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
+            >
+              Parse Listing Snippet
+            </button>
+            <button
+              type="button"
+              @click="runSmartIngest()"
+              class="flex-1 px-3 py-2 text-xs uppercase tracking-wider border-2 border-amber-700 bg-amber-900/30 hover:bg-amber-900/50 text-amber-300 transition-colors min-h-[44px] md:text-sm"
+            >
+              Go Smart
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-1.5" x-show="activeIntentChips.length">
+            <template x-for="chip in activeIntentChips" :key="chip">
+              <span class="px-2 py-0.5 text-[10px] uppercase border border-amber-700 bg-amber-900/30 text-amber-400" x-text="chip"></span>
+            </template>
+          </div>
+        </div>
+
+        <!-- Recent Leads -->
+        <div class="space-y-1.5" x-show="leadHistory.length">
+          <h3 class="text-xs uppercase tracking-widest text-slate-500">// Recent Leads</h3>
+          <div class="max-h-40 overflow-y-auto space-y-1">
+            <template x-for="lead in leadHistory" :key="lead.ts">
+              <button
+                type="button"
+                @click="restoreLead(lead)"
+                class="w-full flex items-center justify-between gap-2 border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2 py-1.5 text-left min-h-[44px]"
+              >
+                <span class="text-[11px] text-slate-300 break-words" x-text="'ZIP ' + (lead.zip || '—') + ' · ' + formatCurrency(lead.listPrice)"></span>
+                <span
+                  class="px-1.5 py-0.5 text-[9px] uppercase shrink-0"
+                  :class="lead.verdict === 'GO' ? 'text-emerald-400' : (lead.verdict === 'NEGOTIATE' ? 'text-amber-400' : 'text-red-400')"
+                  x-text="lead.verdict"
+                ></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Lead Conversations -->
+        <div class="space-y-1.5" x-show="leadChats.length">
+          <h3 class="text-xs uppercase tracking-widest text-slate-500">// Lead Conversations</h3>
+          <div class="max-h-64 overflow-y-auto space-y-1.5">
+            <template x-for="chat in leadChats" :key="chat.id">
+              <div class="border border-slate-700 bg-slate-800">
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5">
+                  <button
+                    type="button"
+                    @click="toggleChatExpand(chat.id)"
+                    class="flex-1 text-left text-[11px] text-slate-300 break-words min-h-[44px]"
+                  >
+                    <span x-text="(expandedChats[chat.id] ? '▾ ' : '▸ ') + 'ZIP ' + (chat.zip || '—') + ' · ' + chat.thread.length + ' MSG'"></span>
+                  </button>
+                  <div class="flex gap-1 shrink-0">
+                    <button
+                      type="button"
+                      @click="restoreLead(chat)"
+                      class="px-2 py-1 text-[9px] uppercase border border-emerald-800 bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50 min-h-[44px]"
+                    >Restore</button>
+                    <button
+                      type="button"
+                      @click="deleteLeadChat(chat.id)"
+                      class="px-2 py-1 text-[9px] uppercase border border-red-800 bg-red-900/30 text-red-400 hover:bg-red-900/50 min-h-[44px]"
+                    >Del</button>
+                  </div>
+                </div>
+                <div class="space-y-1 px-2 pb-2" x-show="expandedChats[chat.id]">
+                  <template x-for="(msg, mi) in chat.thread" :key="mi">
+                    <div
+                      class="text-[10px] break-words"
+                      :class="msg.role === 'user' ? 'text-amber-400' : 'text-slate-400'"
+                      x-text="(msg.role === 'user' ? '> ' : '· ') + msg.text"
+                    ></div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ZIP Presets -->
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <span class="text-xs uppercase text-slate-500">ZIP Presets</span>
+            <button
+              type="button"
+              @click="zipMultiSelect = !zipMultiSelect; saveState();"
+              class="px-2 py-1 text-[9px] uppercase border transition-colors min-h-[44px]"
+              :class="zipMultiSelect
+                ? 'border-emerald-600 bg-emerald-900/40 text-emerald-400'
+                : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'"
+            >MULTI</button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="zip in targetZips" :key="zip">
+              <button
+                type="button"
+                @click="toggleZipPreset(zip)"
+                class="px-3 py-1.5 text-xs border-2 transition-colors min-h-[44px] md:text-sm"
+                :class="activeZips.includes(String(zip))
+                  ? 'border-emerald-600 bg-emerald-900/40 text-emerald-400'
+                  : 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                x-text="zip"
+              ></button>
+            </template>
+          </div>
+          <button
+            type="button"
+            x-show="missingZipSuggestion"
+            @click="addZipToPresets(missingZipSuggestion)"
+            class="mt-2 px-2 py-1 text-[10px] uppercase border border-amber-700 bg-amber-900/30 text-amber-400 hover:bg-amber-900/50 min-h-[44px]"
+            x-text="'ADD ZIP ' + missingZipSuggestion + ' TO PRESETS'"
+          ></button>
+        </div>
+
+        <!-- Deal Inputs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="block sm:col-span-2">
+            <span class="text-xs uppercase text-slate-500 block mb-1">Address</span>
+            <input
+              type="text"
+              x-model="deal.address"
+              placeholder="123 Main St"
+              class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+          </label>
+
+          <label class="block">
+            <span class="text-xs uppercase text-slate-500 block mb-1">Property Type</span>
+            <input
+              type="text"
+              x-model="deal.propertyType"
+              placeholder="SFR / Multi / Duplex"
+              class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+          </label>
+
+          <label class="block">
+            <span class="text-xs uppercase text-slate-500 block mb-1">List Price</span>
+            <input
+              type="number"
+              x-model.number="deal.listPrice"
+              placeholder="0"
+              :class="fieldFlash.listPrice ? 'flash-parsed' : 'border-slate-700'"
+              class="w-full bg-slate-800 border-2 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+          </label>
+
+          <label class="block">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-xs uppercase text-slate-500">ARV</span>
+              <span
+                x-show="fieldFlags.arv === 'DERIVED'"
+                class="px-1.5 py-0.5 text-[9px] uppercase border border-amber-600 bg-amber-900/40 text-amber-400"
+              >DERIVED</span>
+              <span
+                x-show="fieldFlags.arv === 'MISSING'"
+                class="px-1.5 py-0.5 text-[9px] uppercase border border-amber-600 bg-amber-900/40 text-amber-400"
+              >MISSING</span>
+            </div>
+            <input
+              type="number"
+              x-model.number="deal.arv"
+              placeholder="0"
+              :class="fieldFlash.arv ? 'flash-parsed' : (fieldFlags.arv ? 'border-derived' : 'border-slate-700')"
+              class="w-full bg-slate-800 border-2 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+            <button
+              type="button"
+              x-show="heuristics.derivedARV > 0 && (fieldFlags.arv === 'DERIVED' || fieldFlags.arv === 'MISSING')"
+              @click="applyHeuristic('arv')"
+              class="mt-1 px-2 py-1 text-[10px] uppercase tracking-wider border-2 border-amber-700 bg-amber-900/30 hover:bg-amber-900/50 text-amber-300"
+              x-text="'APPLY HEURISTIC → ' + formatCurrency(heuristics.derivedARV)"
+            ></button>
+          </label>
+
+          <label class="block">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-xs uppercase text-slate-500">Estimated Rehab</span>
+              <span
+                x-show="fieldFlags.rehab === 'MISSING'"
+                class="px-1.5 py-0.5 text-[9px] uppercase border border-amber-600 bg-amber-900/40 text-amber-400"
+              >MISSING</span>
+            </div>
+            <input
+              type="number"
+              x-model.number="deal.rehab"
+              placeholder="0"
+              :class="fieldFlash.rehab ? 'flash-parsed' : (fieldFlags.rehab === 'MISSING' ? 'border-derived' : 'border-slate-700')"
+              class="w-full bg-slate-800 border-2 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+          </label>
+
+          <label class="block">
+            <span class="text-xs uppercase text-slate-500 block mb-1">Referral / Finder's Fee</span>
+            <input
+              type="number"
+              min="1000"
+              max="18000"
+              step="500"
+              x-model.number="deal.fee"
+              @input="clampReferralFee()"
+              placeholder="5000"
+              :class="fieldFlash.fee ? 'flash-parsed' : 'border-slate-700'"
+              class="w-full bg-slate-800 border-2 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+            <span class="text-[10px] text-slate-600 mt-1 block">Operational range $1,000 – $18,000 · default $5,000</span>
+          </label>
+
+          <label class="block">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-xs uppercase text-slate-500">Monthly Rent</span>
+              <span
+                x-show="fieldFlags.monthlyRent === 'DERIVED'"
+                class="px-1.5 py-0.5 text-[9px] uppercase border border-amber-600 bg-amber-900/40 text-amber-400"
+              >DERIVED</span>
+              <span
+                x-show="fieldFlags.monthlyRent === 'MISSING'"
+                class="px-1.5 py-0.5 text-[9px] uppercase border border-amber-600 bg-amber-900/40 text-amber-400"
+              >MISSING</span>
+            </div>
+            <input
+              type="number"
+              x-model.number="deal.monthlyRent"
+              placeholder="0"
+              :class="fieldFlash.monthlyRent ? 'flash-parsed' : (fieldFlags.monthlyRent ? 'border-derived' : 'border-slate-700')"
+              class="w-full bg-slate-800 border-2 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+            <button
+              type="button"
+              x-show="heuristics.derivedRent > 0 && (fieldFlags.monthlyRent === 'DERIVED' || fieldFlags.monthlyRent === 'MISSING')"
+              @click="applyHeuristic('monthlyRent')"
+              class="mt-1 px-2 py-1 text-[10px] uppercase tracking-wider border-2 border-amber-700 bg-amber-900/30 hover:bg-amber-900/50 text-amber-300"
+              x-text="'APPLY HEURISTIC → ' + formatCurrency(heuristics.derivedRent)"
+            ></button>
+          </label>
+
+          <label class="block">
+            <span class="text-xs uppercase text-slate-500 block mb-1">Annual Taxes</span>
+            <input
+              type="number"
+              x-model.number="deal.annualTaxes"
+              placeholder="0"
+              :class="fieldFlash.annualTaxes ? 'flash-parsed' : 'border-slate-700'"
+              class="w-full bg-slate-800 border-2 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+          </label>
+
+          <label class="block">
+            <span class="text-xs uppercase text-slate-500 block mb-1">Debt Service</span>
+            <input
+              type="number"
+              x-model.number="deal.debtService"
+              placeholder="0"
+              class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+          </label>
+
+          <label class="block">
+            <span class="text-xs uppercase text-slate-500 block mb-1">Cash Invested</span>
+            <input
+              type="number"
+              x-model.number="deal.cashInvested"
+              placeholder="0"
+              class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+            />
+          </label>
+        </div>
+
+        <!-- Secondary signals + leverage -->
+        <div class="border-2 border-slate-700 bg-slate-800 p-3 space-y-2 text-xs">
+          <h3 class="text-xs uppercase tracking-widest text-slate-500">// Secondary Signals</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div class="flex justify-between border border-slate-700 px-2 py-1">
+              <span class="text-slate-500">Assessed</span>
+              <span class="text-slate-200" x-text="formatCurrency(signals.assessedValue)"></span>
+            </div>
+            <div class="flex justify-between border border-slate-700 px-2 py-1">
+              <span class="text-slate-500">$/Sqft</span>
+              <span class="text-slate-200" x-text="signals.pricePerSqft ? formatCurrency(signals.pricePerSqft) : '—'"></span>
+            </div>
+            <div class="flex justify-between border border-slate-700 px-2 py-1">
+              <span class="text-slate-500">DOM</span>
+              <span class="text-slate-200" x-text="signals.daysOnMarket || '—'"></span>
+            </div>
+            <div class="flex justify-between border border-slate-700 px-2 py-1">
+              <span class="text-slate-500">Range</span>
+              <span class="text-slate-200" x-text="signals.priceRangeMin || signals.priceRangeMax ? (formatCurrency(signals.priceRangeMin) + '–' + formatCurrency(signals.priceRangeMax)) : '—'"></span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center border-2 border-slate-700 bg-slate-900 px-3 py-2">
+            <span class="text-slate-500 uppercase">Seller Leverage</span>
+            <span class="text-amber-400 font-bold" x-text="sellerLeverage + '/100'"></span>
+          </div>
+        </div>
+
+        <!-- Metric Display Grid -->
+        <div class="border-t-2 border-slate-700 pt-4">
+          <h3 class="text-xs uppercase tracking-widest text-slate-500 mb-3">// Computed Metrics</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+
+            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+              <span class="text-slate-500 uppercase">MAO</span>
+              <span class="text-slate-200" x-text="formatCurrency(mao)"></span>
+            </div>
+
+            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+              <span class="text-slate-500 uppercase">Flip Spread</span>
+              <span :class="flipSpread > 0 ? 'text-emerald-400' : 'text-slate-200'" x-text="formatCurrency(flipSpread)"></span>
+            </div>
+
+            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+              <span class="text-slate-500 uppercase">Rent Rule</span>
+              <div class="flex items-center gap-2">
+                <span class="text-slate-200" x-text="formatPct(rentRule)"></span>
+                <span
+                  x-show="rentRule >= 1.0"
+                  class="px-1.5 py-0.5 text-[10px] uppercase border border-emerald-600 bg-emerald-900/40 text-emerald-400"
+                >PASS</span>
+              </div>
+            </div>
+
+            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+              <span class="text-slate-500 uppercase">NOI</span>
+              <span class="text-slate-200" x-text="formatCurrency(noi)"></span>
+            </div>
+
+            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+              <span class="text-slate-500 uppercase">Cap Rate</span>
+              <span class="text-slate-200" x-text="formatPct(capRate)"></span>
+            </div>
+
+            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+              <span class="text-slate-500 uppercase">DSCR</span>
+              <span class="text-slate-200" x-text="formatRatio(dscr)"></span>
+            </div>
+
+            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+              <span class="text-slate-500 uppercase">Cash-on-Cash</span>
+              <span class="text-slate-200" x-text="formatPct(cashOnCash)"></span>
+            </div>
+
+            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 sm:col-span-2">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-slate-500 uppercase">Viability Score</span>
+                <span class="text-slate-200" x-text="viabilityScore + '/100'"></span>
+              </div>
+              <div class="text-emerald-400 tracking-wider" x-text="viabilityBar"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Phase 3B — Decision Matrix -->
+        <div class="border-t-2 border-slate-700 pt-4 space-y-3">
+          <h3 class="text-xs uppercase tracking-widest text-slate-500">// Decision Matrix</h3>
+
+          <div
+            class="border-2 px-3 py-3 space-y-2"
+            :class="dealVerdict.verdict === 'GO'
+              ? 'border-emerald-600 bg-emerald-900/20'
+              : (dealVerdict.verdict === 'NEGOTIATE'
+                ? 'border-amber-600 bg-amber-900/20'
+                : 'border-red-700 bg-red-900/20')"
+          >
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-xs uppercase tracking-widest text-slate-500">Verdict</span>
+              <span
+                class="px-2 py-1 text-sm font-bold uppercase tracking-wider"
+                :class="dealVerdict.verdict === 'GO'
+                  ? 'text-emerald-400'
+                  : (dealVerdict.verdict === 'NEGOTIATE' ? 'text-amber-400' : 'text-red-400')"
+                x-text="dealVerdict.verdict"
+              ></span>
+            </div>
+            <ul class="space-y-1">
+              <template x-for="(reason, ri) in dealVerdict.reasons" :key="ri">
+                <li class="text-[11px] text-slate-300" x-text="'• ' + reason"></li>
+              </template>
+            </ul>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-[10px] uppercase pt-2 border-t border-slate-700">
+              <div>
+                <div class="text-slate-500">Max Offer</div>
+                <div class="text-slate-200" x-text="formatCurrency(maxOffer)"></div>
+              </div>
+              <div>
+                <div class="text-slate-500">Discount</div>
+                <div class="text-slate-200" x-text="formatPct(discountPct * 100)"></div>
+              </div>
+              <div>
+                <div class="text-slate-500">Assessed Δ</div>
+                <div class="text-slate-200" x-text="formatCurrency(assessedDelta)"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3">
+            <template x-for="(structure, si) in dealStructures" :key="structure.name">
+              <div class="border-2 border-slate-700 bg-slate-800 p-3 space-y-2 text-xs">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="uppercase tracking-wider text-slate-300 font-bold" x-text="structure.name"></span>
+                  <button
+                    type="button"
+                    @click="copyDealStructure(structure)"
+                    class="px-2 py-1 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300"
+                    x-text="copiedStructure === structure.name ? 'COPIED!' : 'COPY'"
+                  ></button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-1 text-[11px]">
+                  <div class="text-slate-500">Price to Buyer</div>
+                  <div class="text-slate-200 text-right" x-text="formatCurrency(structure.priceToBuyer)"></div>
+                  <div class="text-slate-500">Terms</div>
+                  <div class="text-slate-300 text-right" x-text="structure.terms"></div>
+                  <div class="text-slate-500">Monthly Pmt</div>
+                  <div class="text-slate-200 text-right" x-text="formatCurrency(structure.monthlyPayment)"></div>
+                  <div class="text-slate-500">Buyer Cap</div>
+                  <div class="text-slate-200 text-right" x-text="formatPct(structure.buyerCapRate)"></div>
+                  <div class="text-slate-500">Buyer CoC</div>
+                  <div class="text-slate-200 text-right" x-text="formatPct(structure.buyerCoC)"></div>
+                </div>
+                <div class="border-t border-slate-700 pt-2 space-y-1">
+                  <div class="text-[10px] uppercase text-slate-500">Buyer Fit</div>
+                  <template x-if="!structure.fitsBuyers || structure.fitsBuyers.length === 0">
+                    <p class="text-[10px] text-slate-600 uppercase">No matching buyers</p>
+                  </template>
+                  <template x-for="buyer in structure.fitsBuyers" :key="buyer.id">
+                    <div class="flex items-center justify-between gap-2 border border-slate-700 px-2 py-1">
+                      <div class="min-w-0">
+                        <div class="text-[11px] text-slate-200 truncate" x-text="buyer.entityName"></div>
+                        <div class="text-[10px] text-slate-500 break-words" x-text="buyer.email"></div>
+                      </div>
+                      <a
+                        :href="mailtoStructure(buyer, structure)"
+                        class="px-2 py-1 text-[9px] uppercase border border-emerald-800 bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50 shrink-0"
+                      >Email Structure</a>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Module 2 — Buyer CRM & Dynamic Match Engine -->
+      <section class="space-y-4">
+
+        <div class="border-2 border-slate-700 bg-slate-900 p-4 space-y-4">
+          <h2 class="text-xs uppercase tracking-widest text-slate-400 border-b-2 border-slate-700 pb-2">
+            // Module 2 — Buyer CRM &amp; Dynamic Match Engine
+          </h2>
+
+          <!-- Buyer Registration Form -->
+          <form @submit.prevent="registerBuyer()" class="space-y-3">
+            <h3 class="text-xs uppercase tracking-widest text-slate-500">// Register Buyer</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="block sm:col-span-2">
+                <span class="text-xs uppercase text-slate-500 block mb-1">Entity Name</span>
+                <input
+                  type="text"
+                  x-model="newBuyer.entityName"
+                  placeholder="Acme Holdings LLC"
+                  required
+                  class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+                />
+              </label>
+              <label class="block sm:col-span-2">
+                <span class="text-xs uppercase text-slate-500 block mb-1">Email</span>
+                <input
+                  type="email"
+                  x-model="newBuyer.email"
+                  placeholder="buyer@example.com"
+                  required
+                  class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+                />
+              </label>
+              <label class="block">
+                <span class="text-xs uppercase text-slate-500 block mb-1">Max Budget</span>
+                <input
+                  type="number"
+                  x-model.number="newBuyer.maxBudget"
+                  placeholder="150000"
+                  required
+                  class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+                />
+              </label>
+              <label class="block">
+                <span class="text-xs uppercase text-slate-500 block mb-1">Target ZIP</span>
+                <select
+                  x-model="newBuyer.targetZip"
+                  required
+                  class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-slate-500 min-h-[44px]"
+                >
+                  <option value="">— Select —</option>
+                  <option value="ALL">ALL</option>
+                  <template x-for="zip in zipUniverse" :key="zip">
+                    <option :value="String(zip)" x-text="zip"></option>
+                  </template>
+                </select>
+              </label>
+              <label class="block">
+                <span class="text-xs uppercase text-slate-500 block mb-1">Min Cap Rate (%)</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  x-model.number="newBuyer.minCapRate"
+                  placeholder="8.00"
+                  required
+                  class="w-full bg-slate-800 border-2 border-slate-700 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 min-h-[44px]"
+                />
+              </label>
+            </div>
+            <button
+              type="submit"
+              class="w-full px-3 py-2 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
+            >
+              + Append to Registry
+            </button>
+          </form>
+
+          <!-- Buyer Registry Table -->
+          <div>
+            <h3 class="text-xs uppercase tracking-widest text-slate-500 mb-2">
+              // Buyer Registry
+              <span class="text-slate-600" x-text="'[' + buyers.length + ']'"></span>
+            </h3>
+            <div class="border-2 border-slate-700 max-h-48 overflow-y-auto overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-slate-800 sticky top-0">
+                  <tr class="border-b-2 border-slate-700 text-slate-500 uppercase">
+                    <th class="px-2 py-2 text-left">Entity</th>
+                    <th class="px-2 py-2 text-left hidden sm:table-cell">Email</th>
+                    <th class="px-2 py-2 text-right">Budget</th>
+                    <th class="px-2 py-2 text-center">ZIP</th>
+                    <th class="px-2 py-2 text-right hidden sm:table-cell">Cap%</th>
+                    <th class="px-2 py-2 text-center">DEL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-if="buyers.length === 0">
+                    <tr>
+                      <td colspan="6" class="px-2 py-4 text-center text-slate-600 uppercase">Registry empty</td>
+                    </tr>
+                  </template>
+                  <template x-for="buyer in buyers" :key="buyer.id">
+                    <tr class="border-b border-slate-700/50 hover:bg-slate-800/50">
+                      <td class="px-2 py-2 text-slate-200 break-words" x-text="buyer.entityName"></td>
+                      <td class="px-2 py-2 text-slate-400 hidden sm:table-cell break-words" x-text="buyer.email"></td>
+                      <td class="px-2 py-2 text-slate-300 text-right break-words" x-text="formatCurrency(buyer.maxBudget)"></td>
+                      <td class="px-2 py-2 text-slate-300 text-center" x-text="buyer.targetZip"></td>
+                      <td class="px-2 py-2 text-slate-300 text-right hidden sm:table-cell break-words" x-text="formatPct(buyer.minCapRate)"></td>
+                      <td class="px-2 py-2 text-center">
+                        <button
+                          type="button"
+                          @click="deleteBuyer(buyer.id)"
+                          class="px-1.5 py-0.5 text-[10px] uppercase border border-red-800 bg-red-900/30 text-red-400 hover:bg-red-900/50"
+                        >X</button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Hot-Zone Density Matrix -->
+          <div>
+            <h3 class="text-xs uppercase tracking-widest text-slate-500 mb-2">// Hot-Zone Density Matrix</h3>
+            <div class="space-y-1.5 text-xs">
+              <template x-for="zone in hotZoneDensity" :key="zone.zip">
+                <div class="flex items-center gap-3 border-2 border-slate-700 bg-slate-800 px-3 py-1.5">
+                  <span class="text-slate-400 w-14" x-text="zone.zip"></span>
+                  <span class="text-amber-400 tracking-wider flex-1" x-text="zone.bar"></span>
+                  <span class="text-slate-500 w-8 text-right" x-text="zone.count"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Dynamic Match Results -->
+          <div id="matched-buyers-panel" x-ref="matchedBuyersPanel">
+            <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
+              <h3 class="text-xs uppercase tracking-widest text-slate-500">
+                // Matched Buyers
+                <span class="text-slate-600" x-text="'[' + matchedBuyers.length + ']'"></span>
+              </h3>
+              <button
+                type="button"
+                @click="copyAllMatchedEmails()"
+                :disabled="matchedBuyers.length === 0"
+                class="px-2 py-1 text-[10px] uppercase tracking-wider border-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                :class="emailsCopied
+                  ? 'border-emerald-600 bg-emerald-900/40 text-emerald-400'
+                  : 'border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200'"
+                x-text="emailsCopied ? 'COPIED TO CLIPBOARD!' : 'COPY ALL EMAILS'"
+              ></button>
+            </div>
+
+            <button
+              type="button"
+              @click="onDynamicMatchClick()"
+              :disabled="matchedBuyers.length === 0"
+              class="w-full mb-3 px-3 py-2.5 text-xs font-bold uppercase tracking-wider border-2 transition-colors disabled:cursor-not-allowed min-h-[44px] md:text-sm"
+              :class="matchedBuyers.length === 0
+                ? 'border-slate-700 bg-slate-800 text-slate-500'
+                : (emailsCopied
+                  ? 'border-emerald-600 bg-emerald-900/40 text-emerald-400'
+                  : 'border-amber-500 bg-amber-900/40 text-amber-300 glow-amber')"
+              x-text="dynamicMatchButtonLabel"
+            ></button>
+
+            <div
+              x-show="matchToast"
+              x-transition
+              class="mb-3 px-3 py-2 text-xs uppercase tracking-wider border-2 border-emerald-600 bg-emerald-900/40 text-emerald-400"
+              x-text="matchToast"
+            ></div>
+
+            <template x-if="matchedBuyers.length === 0">
+              <p class="text-xs text-slate-600 uppercase border-2 border-slate-700 bg-slate-800 px-3 py-4 text-center">
+                No matching investors — register buyers or adjust deal criteria
+              </p>
+            </template>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+              <template x-for="match in matchedBuyers" :key="match.id">
+                <div
+                  class="border-2 bg-slate-800 px-3 py-2 space-y-1"
+                  :class="match.matchScore === 100 ? 'border-emerald-600' : 'border-slate-700'"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="text-xs text-slate-200 font-bold truncate" x-text="match.entityName"></div>
+                    <span
+                      class="px-2 py-0.5 text-[10px] uppercase border shrink-0"
+                      :class="match.matchScore === 100
+                        ? 'border-emerald-600 bg-emerald-900/40 text-emerald-400'
+                        : 'border-slate-600 bg-slate-700 text-slate-300'"
+                      x-text="match.matchScore + '%'"
+                    ></span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 truncate" x-text="match.email"></div>
+                  <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500 uppercase">
+                    <span x-text="'Budget ' + formatCurrency(match.maxBudget)"></span>
+                    <span x-text="'ZIP ' + match.targetZip"></span>
+                    <span x-text="'Min Cap ' + formatPct(match.minCapRate)"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+    </div>
+
+    <!-- Module 3 — Kanban Pipeline & Contract Desk -->
+    <section class="mt-4 border-2 border-slate-700 bg-slate-900 p-4 space-y-4 module-3-section">
+      <h2 class="text-xs uppercase tracking-widest text-slate-400 border-b-2 border-slate-700 pb-2 no-print">
+        // Module 3 — Kanban Pipeline &amp; Contract Desk
+      </h2>
+
+      <!-- Kanban Board -->
+      <div class="kanban-board no-print">
+        <h3 class="text-xs uppercase tracking-widest text-slate-500 mb-3">// Pipeline Tracker</h3>
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+          <template x-for="(stage, index) in pipelineStages" :key="stage">
+            <div
+              class="border-2 p-2 min-h-[140px] flex flex-col"
+              :class="dealStage === index ? 'border-emerald-600 bg-slate-800' : 'border-slate-700 bg-slate-800/50'"
+            >
+              <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-2 border-b border-slate-700 pb-1" x-text="stage"></div>
+              <template x-if="dealStage === index">
+                <div class="flex-1 flex flex-col justify-between gap-2">
+                  <div class="text-xs space-y-1">
+                    <div class="text-slate-300 font-bold" x-text="'ZIP ' + (deal.zip || '—')"></div>
+                    <div class="text-slate-500" x-text="formatCurrency(deal.listPrice)"></div>
+                    <div class="text-[10px] text-slate-600" x-text="'FEE ' + formatCurrency(deal.fee)"></div>
+                    <div class="text-[10px] text-slate-600" x-text="'VIAB ' + viabilityScore"></div>
+                  </div>
+                  <div class="flex gap-1">
+                    <button
+                      type="button"
+                      @click="regressStage()"
+                      :disabled="dealStage === 0"
+                      class="flex-1 px-1 py-1 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >&lt;&lt;</button>
+                    <button
+                      type="button"
+                      @click="advanceStage()"
+                      :disabled="dealStage === pipelineStages.length - 1"
+                      class="flex-1 px-1 py-1 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >&gt;&gt;</button>
+                  </div>
+                </div>
+              </template>
+              <template x-if="dealStage !== index">
+                <div class="flex-1 flex items-center justify-center">
+                  <span class="text-[10px] text-slate-700 uppercase">—</span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+        <div class="mt-2 flex items-center justify-between text-[10px] text-slate-500 uppercase">
+          <span x-text="'Stage ' + (dealStage + 1) + ' / ' + pipelineStages.length"></span>
+          <span x-text="pipelineStages[dealStage]"></span>
+        </div>
+      </div>
+
+      <!-- Contract Desk — Immutable Snapshot Generators -->
+      <div class="contract-desk space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 no-print">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-xs uppercase tracking-widest text-slate-500">// Contract Desk</h3>
+            <span
+              x-show="contractsStale"
+              class="px-2 py-0.5 text-[10px] uppercase tracking-wider border-2 border-red-600 bg-red-900/40 text-red-400"
+            >STALE — REFRESH</span>
+          </div>
+          <button
+            type="button"
+            @click="refreshContracts()"
+            class="px-3 py-1.5 text-[10px] uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200"
+          >
+            Refresh Contract Snapshots
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 contract-grid">
+
+          <!-- Anonymized Deal Teaser -->
+          <div class="border-2 border-slate-700 bg-slate-800 p-3 space-y-2 contract-card">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase text-slate-400 contract-label">Anonymized Deal Teaser</span>
+              <button
+                type="button"
+                @click="copyContract('teaser')"
+                class="px-2 py-1 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300 no-print"
+                x-text="copiedContract === 'teaser' ? 'COPIED TO CLIPBOARD!' : 'COPY'"
+              ></button>
+            </div>
+            <textarea
+              readonly
+              :value="contracts.teaser"
+              rows="10"
+              class="w-full bg-slate-900 border-2 border-slate-700 px-2 py-2 text-[11px] text-slate-300 resize-none focus:outline-none min-h-[96px]"
+            ></textarea>
+          </div>
+
+          <!-- Non-Circumvention Referral & Finder's Fee Agreement -->
+          <div class="border-2 border-slate-700 bg-slate-800 p-3 space-y-2 contract-card">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs uppercase text-slate-400 contract-label">Non-Circumvention Referral &amp; Finder's Fee Agreement</span>
+              <button
+                type="button"
+                @click="copyContract('referral')"
+                class="px-2 py-1 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300 shrink-0 no-print"
+                x-text="copiedContract === 'referral' ? 'COPIED TO CLIPBOARD!' : 'COPY'"
+              ></button>
+            </div>
+            <textarea
+              readonly
+              :value="contracts.referralAgreement"
+              rows="12"
+              class="w-full bg-slate-900 border-2 border-slate-700 px-2 py-2 text-[11px] text-slate-300 resize-none focus:outline-none min-h-[96px]"
+            ></textarea>
+          </div>
+
+          <!-- Private Equity Investment Memo -->
+          <div class="border-2 border-slate-700 bg-slate-800 p-3 space-y-2 contract-card">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase text-slate-400 contract-label">Private Equity Investment Memo</span>
+              <button
+                type="button"
+                @click="copyContract('memo')"
+                class="px-2 py-1 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300 no-print"
+                x-text="copiedContract === 'memo' ? 'COPIED TO CLIPBOARD!' : 'COPY'"
+              ></button>
+            </div>
+            <textarea
+              readonly
+              :value="contracts.memo"
+              rows="10"
+              class="w-full bg-slate-900 border-2 border-slate-700 px-2 py-2 text-[11px] text-slate-300 resize-none focus:outline-none min-h-[96px]"
+            ></textarea>
+          </div>
+
+        </div>
+
+        <!-- Wire instructions (print surface) -->
+        <div class="wire-instructions text-xs leading-relaxed">
+          <h3 class="uppercase tracking-widest mb-2 font-bold">Wire / Escrow Instructions</h3>
+          <p x-text="contracts.wireInstructions"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Module 5 — Seller Outreach & Feedback Relay -->
+    <section class="mt-4 border-2 border-slate-700 bg-slate-900 p-4 space-y-4 no-print">
+      <h2 class="text-xs uppercase tracking-widest text-slate-400 border-b-2 border-slate-700 pb-2">
+        // Module 5 — Seller Outreach &amp; Feedback Relay
+      </h2>
+
+      <!-- Negotiation Decision Matrix -->
+      <div class="space-y-2">
+        <h3 class="text-xs uppercase tracking-widest text-slate-500">// Negotiation Decision Matrix</h3>
+        <div
+          class="border-2 px-3 py-2 flex items-center justify-between gap-2"
+          :class="dealVerdict.verdict === 'GO'
+            ? 'border-emerald-600 bg-emerald-900/20'
+            : (dealVerdict.verdict === 'NEGOTIATE'
+              ? 'border-amber-600 bg-amber-900/20'
+              : 'border-red-700 bg-red-900/20')"
+        >
+          <span class="text-xs uppercase tracking-widest text-slate-500">Verdict</span>
+          <span
+            class="text-sm font-bold uppercase tracking-wider"
+            :class="dealVerdict.verdict === 'GO'
+              ? 'text-emerald-400'
+              : (dealVerdict.verdict === 'NEGOTIATE' ? 'text-amber-400' : 'text-red-400')"
+            x-text="dealVerdict.verdict"
+          ></span>
+        </div>
+        <div class="overflow-x-auto border-2 border-slate-700">
+          <table class="w-full text-[10px] border-collapse">
+            <thead>
+              <tr class="text-slate-500 uppercase bg-slate-800">
+                <th class="text-left py-1.5 px-2">Metric</th>
+                <th class="text-left py-1.5 px-2">Value</th>
+                <th class="text-left py-1.5 px-2">Weight</th>
+                <th class="text-left py-1.5 px-2">Justification</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="row in negotiationMatrix" :key="row.label">
+                <tr class="border-t border-slate-800">
+                  <td class="py-1.5 px-2 text-slate-400 uppercase whitespace-nowrap" x-text="row.label"></td>
+                  <td class="py-1.5 px-2 text-slate-200 whitespace-nowrap" x-text="row.value"></td>
+                  <td class="py-1.5 px-2 text-slate-500 whitespace-nowrap" x-text="row.weight"></td>
+                  <td class="py-1.5 px-2 text-slate-300" x-text="row.justification"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Brutal Offer Tiers -->
+      <div class="space-y-3" x-ref="sellerTiersPanel">
+        <h3 class="text-xs uppercase tracking-widest text-slate-500">// Brutal Offer Generator</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <template x-for="tier in sellerOfferTiers" :key="tier.id">
+            <div class="border-2 border-slate-700 bg-slate-800 p-3 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <span
+                  class="text-xs font-bold uppercase tracking-wider"
+                  :class="tier.id === 'brutal' ? 'text-red-400' : (tier.id === 'fair' ? 'text-amber-400' : 'text-emerald-400')"
+                  x-text="tier.label"
+                ></span>
+                <div class="text-right">
+                  <div class="text-sm text-slate-200" x-text="formatCurrency(tier.price)"></div>
+                  <div class="text-[9px] text-slate-500" x-text="formatPct(tier.discountPct) + ' off list'"></div>
+                </div>
+              </div>
+              <ul class="text-[9px] text-slate-500 space-y-0.5">
+                <template x-for="(j, ji) in tier.justification" :key="ji">
+                  <li x-text="'• ' + j"></li>
+                </template>
+              </ul>
+              <textarea
+                readonly
+                :value="sellerEmailTemplate(tier).body"
+                rows="8"
+                class="w-full bg-slate-900 border-2 border-slate-700 px-2 py-2 text-[11px] text-slate-300 resize-none focus:outline-none min-h-[96px]"
+              ></textarea>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  @click="copyOfferTier(tier)"
+                  class="flex-1 px-2 py-1.5 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300"
+                  x-text="copiedOfferTier === tier.id ? 'COPIED!' : 'COPY'"
+                ></button>
+                <a
+                  :href="mailtoOfferTier(tier)"
+                  class="flex-1 px-2 py-1.5 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300 text-center"
+                >Mailto</a>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Feedback Relay -->
+      <div class="space-y-2 border-2 border-slate-700 bg-slate-800 p-3">
+        <h3 class="text-xs uppercase tracking-widest text-slate-500">// Feedback Relay</h3>
+        <textarea
+          x-model="sellerFeedbackRaw"
+          rows="4"
+          placeholder="Paste seller counter / email reply... e.g. Counter at $155,000 with $3,000 closing credit and seller financing"
+          class="w-full bg-slate-900 border-2 border-slate-700 px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-500 resize-y min-h-[96px]"
+        ></textarea>
+        <button
+          type="button"
+          @click="parseSellerCounter()"
+          class="w-full px-3 py-2 text-xs uppercase tracking-wider border-2 border-amber-700 bg-amber-900/30 hover:bg-amber-900/50 text-amber-300 min-h-[44px] md:text-sm"
+        >
+          Parse Counter
+        </button>
+        <div x-show="deal.sellerCounter?.counterPrice" class="text-[11px] space-y-1 border-t border-slate-700 pt-2">
+          <div class="flex justify-between">
+            <span class="text-slate-500 uppercase">Counter Price</span>
+            <span class="text-amber-400" x-text="formatCurrency(deal.sellerCounter?.counterPrice || 0)"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500 uppercase">Original List</span>
+            <span class="text-slate-300" x-text="formatCurrency(deal.sellerCounter?.originalList || 0)"></span>
+          </div>
+          <div class="text-slate-400" x-text="'Concessions: ' + ((deal.sellerCounter?.concessions || []).length ? deal.sellerCounter.concessions.join('; ') : 'none')"></div>
+        </div>
+      </div>
+
+      <!-- Buyer Broadcast -->
+      <div class="space-y-2 border-2 border-slate-700 bg-slate-800 p-3" x-ref="buyerBroadcastPanel">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <h3 class="text-xs uppercase tracking-widest text-slate-500">// Buyer Broadcast</h3>
+          <button
+            type="button"
+            @click="copyBroadcast()"
+            class="px-2 py-1 text-[10px] uppercase border-2 border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300"
+            x-text="broadcastCopied ? 'COPIED!' : 'COPY ALL BROADCAST'"
+          ></button>
+        </div>
+        <textarea
+          readonly
+          :value="buyerBroadcastTemplate"
+          rows="8"
+          class="w-full bg-slate-900 border-2 border-slate-700 px-2 py-2 text-[11px] text-slate-300 resize-none focus:outline-none min-h-[96px]"
+        ></textarea>
+        <div class="space-y-1 max-h-40 overflow-y-auto">
+          <template x-for="buyer in matchedBuyers" :key="'bc-' + buyer.id">
+            <div class="flex items-center justify-between gap-2 border border-slate-700 px-2 py-1">
+              <div class="min-w-0">
+                <div class="text-[11px] text-slate-200 truncate" x-text="buyer.entityName"></div>
+                <div class="text-[10px] text-slate-500 break-words" x-text="buyer.email"></div>
+              </div>
+              <div class="flex gap-1 shrink-0">
+                <button
+                  type="button"
+                  @click="copyInvestorEmail(buyer)"
+                  class="px-2 py-1 text-[9px] uppercase border border-slate-700 bg-slate-900 hover:bg-slate-700 text-slate-300"
+                  x-text="copiedInvestorEmail === buyer.id ? 'COPIED!' : 'COPY'"
+                ></button>
+                <a
+                  :href="mailtoBroadcastBuyer(buyer)"
+                  class="px-2 py-1 text-[9px] uppercase border border-emerald-800 bg-emerald-900/30 text-emerald-400"
+                >Mailto</a>
+              </div>
+            </div>
+          </template>
+          <template x-if="matchedBuyers.length === 0">
+            <p class="text-[10px] text-slate-600 uppercase">No matched buyers for broadcast</p>
+          </template>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /** Phase 3 — USD formatter for immutable contract snapshots */
+    function formatContractUsd(n) {
+      const v = Number(n);
+      const safe = Number.isFinite(v) ? Math.round(v) : 0;
+      return safe.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      });
+    }
+
+    function formatContractPct(n) {
+      const v = Number(n);
+      if (!Number.isFinite(v)) return '0.00%';
+      return v.toFixed(2) + '%';
+    }
+
+    function formatContractRatio(n) {
+      const v = Number(n);
+      if (!Number.isFinite(v)) return '0.00';
+      return v.toFixed(2);
+    }
+
+    /**
+     * Pure snapshot generator — no Alpine `this`, no live getters.
+     * @param {object} dealSnapshot
+     * @param {object} metricsSnapshot
+     * @returns {{ teaser: string, referralAgreement: string, memo: string, wireInstructions: string }}
+     */
+    function buildContracts(dealSnapshot, metricsSnapshot) {
+      const d = dealSnapshot || {};
+      const m = metricsSnapshot || {};
+      const fee = Number(d.fee) > 0 ? Number(d.fee) : 5000;
+      const capitalRequired = Number(d.cashInvested) > 0
+        ? Number(d.cashInvested)
+        : (Number(d.listPrice) || 0) + (Number(d.rehab) || 0);
+
+      const zipLabel = d.zip
+        ? String(d.zip)
+        : (Number(d.listPrice) > 0 ? 'PENDING' : 'TBD');
+
+      const teaser = [
+        '═══════════════════════════════════════',
+        '  OFF-MARKET DEAL TEASER — CONFIDENTIAL',
+        '═══════════════════════════════════════',
+        '',
+        'Market Area:     ZIP ' + zipLabel,
+        'Asking Price:    ' + formatContractUsd(d.listPrice),
+        'ARV:             ' + formatContractUsd(d.arv),
+        'Est. Rehab:      ' + formatContractUsd(d.rehab),
+        'Monthly Rent:    ' + formatContractUsd(d.monthlyRent),
+        'Cap Rate:        ' + formatContractPct(m.capRate),
+        "Finder's Fee:    " + formatContractUsd(fee),
+        '',
+        'Street address withheld. Full disclosure',
+        'available under executed NCND.',
+        "Introduction only — Referral / Finder's Fee",
+        'paid via Title/Escrow HUD-1 at closing.',
+        '',
+        '— DEALROOM PROPRIETARY TERMINAL —',
+      ].join('\n');
+
+      const referralAgreement = [
+        '═══════════════════════════════════════',
+        '  NON-CIRCUMVENTION REFERRAL &',
+        "  FINDER'S FEE AGREEMENT",
+        '═══════════════════════════════════════',
+        '',
+        'This Agreement confirms that the Scout / Referral',
+        'Agent acts solely as an introduction intermediary',
+        'and does NOT take title, assume purchase-contract',
+        'liability, or act as a wholesaler/assignee.',
+        '',
+        'Market Area:             ZIP ' + (d.zip || (Number(d.listPrice) > 0 ? 'PENDING' : '________')),
+        'Indicative Price:        ' + formatContractUsd(d.listPrice),
+        "Referral / Finder's Fee: " + formatContractUsd(fee),
+        '',
+        'The Scout is owed a flat Referral Reward of',
+        formatContractUsd(fee) + ' for making the introduction',
+        'between Buyer and Seller.',
+        '',
+        'Said reward shall be paid directly by the licensed',
+        "U.S. Title / Escrow company from the Buyer's HUD-1",
+        'Settlement Statement at closing. No side payments.',
+        '',
+        'Parties shall not circumvent the Scout on this or',
+        'related introductions for a period of 24 months.',
+        '',
+        'Scout / Referrer: _______________  Date: ______',
+        'Buyer:           _______________  Date: ______',
+        '',
+        '— DEALROOM PROPRIETARY TERMINAL —',
+      ].join('\n');
+
+      const memo = [
+        '═══════════════════════════════════════',
+        '  PRIVATE EQUITY INVESTMENT MEMO',
+        '═══════════════════════════════════════',
+        '',
+        'Market:              ZIP ' + zipLabel,
+        'Property Type:       ' + (d.propertyType || 'SFR'),
+        '',
+        '── FINANCIAL SUMMARY ──',
+        '',
+        'Purchase Price:      ' + formatContractUsd(d.listPrice),
+        'Rehab Budget:        ' + formatContractUsd(d.rehab),
+        'Capital Required:    ' + formatContractUsd(capitalRequired),
+        'After-Repair Value:  ' + formatContractUsd(d.arv),
+        "Referral / Finder's Fee: " + formatContractUsd(fee),
+        '',
+        '── RETURNS ──',
+        '',
+        'Net Operating Income: ' + formatContractUsd(m.noi),
+        'Cap Rate:             ' + formatContractPct(m.capRate),
+        'Cash-on-Cash Return:  ' + formatContractPct(m.cashOnCash),
+        'DSCR:                 ' + formatContractRatio(m.dscr),
+        '',
+        'Confidential — for qualified investors only.',
+        '',
+        '— DEALROOM PROPRIETARY TERMINAL —',
+      ].join('\n');
+
+      const wireInstructions = [
+        'TITLE / ESCROW WIRE INSTRUCTIONS (SNAPSHOT)',
+        'Market ZIP: ' + zipLabel,
+        'Indicative Purchase: ' + formatContractUsd(d.listPrice),
+        "Referral / Finder's Fee due Scout: " + formatContractUsd(fee),
+        'Disburse Finder\'s Fee from Buyer HUD-1 at closing via licensed U.S. Title/Escrow.',
+        'No side payments. Funds must clear through escrow only.',
+        'Reference: DEALROOM Non-Circumvention Referral & Finder\'s Fee Agreement.',
+      ].join('\n');
+
+      return { teaser, referralAgreement, memo, wireInstructions };
+    }
+
+    /**
+     * Phase 3B — pure deal structure generator.
+     * @returns {Array<{name, priceToBuyer, terms, monthlyPayment, buyerCapRate, buyerCoC, fitsBuyerIds, fitsBuyers}>}
+     */
+    function buildDealStructures(deal, metrics, buyers) {
+      const listPrice = Number(deal.listPrice) || 0;
+      const mao = Number(metrics.mao) || 0;
+      const maxOffer = Math.max(mao, 0);
+      const fee = Number(deal.fee) > 0 ? Number(deal.fee) : 5000;
+      const noi = Number(metrics.noi) || 0;
+      const debtAnnual = Number(deal.debtService) || 0;
+      const debtMonthly = debtAnnual / 12;
+      const buyerList = Array.isArray(buyers) ? buyers : [];
+
+      const monthlyPI = (loan) => {
+        if (!(loan > 0)) return 0;
+        const r = 0.07 / 12;
+        const n = 360;
+        const pow = Math.pow(1 + r, n);
+        return (loan * r * pow) / (pow - 1);
+      };
+
+      const capOn = (price) => {
+        if (!(price > 0)) return 0;
+        return (noi / price) * 100;
+      };
+
+      const cocOn = (cashIn, annualDebt) => {
+        if (!(cashIn > 0)) return 0;
+        return ((noi - annualDebt) / cashIn) * 100;
+      };
+
+      const tagFits = (priceToBuyer, buyerCapRate) => {
+        const fits = buyerList.filter((b) => {
+          const budgetOk = Number(b.maxBudget) >= priceToBuyer;
+          const capOk = b.minCapRate == null || buyerCapRate >= Number(b.minCapRate);
+          return budgetOk && capOk;
+        });
+        return {
+          fitsBuyerIds: fits.map((b) => b.id),
+          fitsBuyers: fits,
+        };
+      };
+
+      // A. CASH @ MAO
+      const cashPrice = maxOffer;
+      const cashCap = capOn(cashPrice);
+      const cashFit = tagFits(cashPrice, cashCap);
+      const cash = {
+        name: 'A. CASH @ MAO',
+        priceToBuyer: cashPrice,
+        terms: 'All-cash at Maximum Allowable Offer',
+        monthlyPayment: 0,
+        buyerCapRate: cashCap,
+        buyerCoC: cocOn(cashPrice, 0),
+        ...cashFit,
+      };
+
+      // B. SELLER FINANCE @ LIST — 5% down, 7%, 30yr
+      const sfDown = listPrice * 0.05;
+      const sfLoan = listPrice - sfDown;
+      const sfPI = monthlyPI(sfLoan);
+      const sfCap = capOn(listPrice);
+      const sfFit = tagFits(listPrice, sfCap);
+      const sf = {
+        name: 'B. SELLER FINANCE @ LIST',
+        priceToBuyer: listPrice,
+        terms: '5% down · 7% · 30yr seller note · PI = L·r·(1+r)^n / ((1+r)^n−1)',
+        monthlyPayment: sfPI,
+        buyerCapRate: sfCap,
+        buyerCoC: cocOn(sfDown, sfPI * 12),
+        ...sfFit,
+      };
+
+      // C. SUBJECT-TO — assume debt; price = down payment only
+      const subDown = listPrice * 0.05;
+      const subCap = capOn(listPrice);
+      const subFit = tagFits(subDown, subCap);
+      const subto = {
+        name: 'C. SUBJECT-TO',
+        priceToBuyer: subDown,
+        terms: 'Buyer assumes existing debt; cash to seller = down only',
+        monthlyPayment: debtMonthly,
+        buyerCapRate: subCap,
+        buyerCoC: cocOn(subDown, debtAnnual),
+        ...subFit,
+      };
+
+      // D. NOVATION — buyer pays list; fee on top
+      const novPrice = listPrice + fee;
+      const novCap = capOn(listPrice);
+      const novFit = tagFits(novPrice, novCap);
+      const novation = {
+        name: 'D. NOVATION',
+        priceToBuyer: novPrice,
+        terms: 'Buyer pays list; Finder\'s Fee stacked on top via escrow',
+        monthlyPayment: 0,
+        buyerCapRate: novCap,
+        buyerCoC: cocOn(novPrice, 0),
+        ...novFit,
+      };
+
+      return [cash, sf, subto, novation];
+    }
+
+    /**
+     * Phase 3C — brutal seller offer generator (pure).
+     * @returns {{ brutal, fair, walkAway }} tier objects with id, label, price, body
+     */
+    function buildSellerOffer(deal, leverage, signals, maxOffer) {
+      const listPrice = Number(deal.listPrice) || 0;
+      const mao = Number(deal.mao != null ? deal.mao : maxOffer) || 0;
+      const assessed = Number(signals && signals.assessedValue) || 0;
+      const dom = Number(signals && signals.daysOnMarket) || 0;
+      const lev = Number(leverage) || 0;
+      const zip = deal.zip || 'PENDING';
+      const fee = Number(deal.fee) > 0 ? Number(deal.fee) : 5000;
+
+      const candidates = [
+        mao > 0 ? mao : Infinity,
+        assessed > 0 ? assessed * 1.05 : Infinity,
+        listPrice > 0 ? listPrice * 0.65 : Infinity,
+      ].filter((n) => Number.isFinite(n) && n > 0 && n !== Infinity);
+
+      let anchor = candidates.length ? Math.min(...candidates) : Math.max(mao, 0);
+      if (lev >= 70) {
+        anchor = Math.round(anchor * 0.90);
+      }
+      anchor = Math.max(0, Math.round(anchor));
+
+      const fair = Math.max(0, Math.round(Number(maxOffer) || 0));
+      const walkAway = Math.max(0, Math.round(fair * 1.05));
+      const assessedDelta = listPrice - assessed;
+
+      const compose = (tierLabel, price) => {
+        const lines = [
+          'Subject: Cash Offer — ZIP ' + zip + ' · ' + tierLabel,
+          '',
+          'Hello,',
+          '',
+          'I am prepared to present a clean cash offer of ' + formatContractUsd(price),
+          'on the property in ZIP ' + zip + ' (list ' + formatContractUsd(listPrice) + ').',
+          '',
+          'Market context:',
+          dom > 0
+            ? '• Days on market: ' + dom + (dom >= 90 ? ' (motivated seller signal)' : '')
+            : '• Days on market: n/a',
+          assessed > 0
+            ? '• Assessed delta: list is ' + formatContractUsd(assessedDelta) + ' vs assessed ' + formatContractUsd(assessed)
+            : '• Assessed value: not disclosed in available data',
+          '• Condition: offer assumes AS-IS (no repair credits)',
+          '',
+          'Offer terms:',
+          '• 14-day cash close',
+          '• No contingencies except clear title',
+          '• Proof of funds on acceptance',
+          '• Finder/referral coordination via U.S. Title/Escrow HUD-1 (fee ' + formatContractUsd(fee) + ')',
+          '• This offer expires in 48 hours',
+          '',
+          'If aligned, reply with preferred title company and we lock it.',
+          '',
+          'Respectfully,',
+          'DealRoom Scout',
+        ];
+        return lines.join('\n');
+      };
+
+      const buildJustification = (tierId, price) => {
+        const bullets = [];
+        bullets.push(
+          dom > 0
+            ? 'DOM ' + dom + (dom >= 90 ? ' days (≥90 → motivated seller)' : ' days (<90 threshold)')
+            : 'DOM not disclosed'
+        );
+        bullets.push(
+          assessed > 0
+            ? 'Assessed ' + formatContractUsd(assessed) + ' vs List ' + formatContractUsd(listPrice) + ' (Δ ' + formatContractUsd(assessedDelta) + ')'
+            : 'Assessed value not disclosed'
+        );
+        bullets.push('Seller leverage score ' + lev + '/100' + (lev >= 70 ? ' → anchor trimmed 10%' : ''));
+        if (tierId === 'brutal') {
+          bullets.push(
+            'Anchor = min(MAO ' + formatContractUsd(mao) +
+            ', Assessed×1.05 ' + (assessed > 0 ? formatContractUsd(Math.round(assessed * 1.05)) : 'n/a') +
+            ', List×0.65 ' + (listPrice > 0 ? formatContractUsd(Math.round(listPrice * 0.65)) : 'n/a') + ')'
+          );
+        } else if (tierId === 'fair') {
+          bullets.push('Fair = Max Offer (MAO clamped ≥ 0) ' + formatContractUsd(fair));
+        } else {
+          bullets.push('Walk-Away = Fair ' + formatContractUsd(fair) + ' + 5% ceiling');
+        }
+        return bullets;
+      };
+      const discountPctFor = (price) => (listPrice > 0 ? ((listPrice - price) / listPrice) * 100 : 0);
+
+      return {
+        brutal: {
+          id: 'brutal',
+          label: 'BRUTAL (ANCHOR)',
+          price: anchor,
+          discountPct: discountPctFor(anchor),
+          justification: buildJustification('brutal', anchor),
+          body: compose('BRUTAL ANCHOR', anchor),
+        },
+        fair: {
+          id: 'fair',
+          label: 'FAIR (MAX OFFER)',
+          price: fair,
+          discountPct: discountPctFor(fair),
+          justification: buildJustification('fair', fair),
+          body: compose('FAIR MAX OFFER', fair),
+        },
+        walkAway: {
+          id: 'walkAway',
+          label: 'WALK-AWAY (+5%)',
+          price: walkAway,
+          discountPct: discountPctFor(walkAway),
+          justification: buildJustification('walkAway', walkAway),
+          body: compose('WALK-AWAY CEILING', walkAway),
+        },
+      };
+    }
+
+    const DEALROOM_SCHEMA_VERSION = 1;
+
+    function dealRoomApp() {
+      return {
+        status: 'READY',
+
+        deal: {
+          address: '',
+          zip: '',
+          listPrice: 0,
+          arv: 0,
+          rehab: 0,
+          fee: 5000,
+          monthlyRent: 0,
+          annualTaxes: 0,
+          debtService: 0,
+          cashInvested: 0,
+          propertyType: '',
+          sellerCounter: { counterPrice: 0, originalList: 0, closingCredits: 0, sellerFinancing: null, concessions: [], parsedAt: null },
+        },
+
+        targetZips: [
+          38118, 44105, 63116, 64130,
+          // investor-dense additions
+          38109, 44120, 63136, 64129, 48224, 35215, 77093,
+        ],
+        activeZips: [],
+        zipMultiSelect: false,
+
+        intent: {
+          distressed: false,
+          lowCost: false,
+          sellerFinancing: false,
+          matchBuyers: false,
+          emailSellers: false,
+          emailInvestors: false,
+          zipHint: '',
+          budgetHint: 0,
+        },
+        buyers: [],
+        /** @type {Map<string, object[]>} ZIP → buyers; includes 'ALL' bucket. Rebuilt on buyer mutate only. */
+        buyersByZip: null,
+        /** Cached matched buyer ids — invalidated on deal.zip / deal.listPrice / buyers change */
+        matchedBuyerIds: [],
+        _matchCacheKey: '',
+        _buyersRevision: 0,
+        rawIngestionText: '',
+        leadHistory: [],
+        leadChats: [],
+        activeChatZip: '',
+        expandedChats: {},
+        sellerFeedbackRaw: '',
+        copiedOfferTier: '',
+        broadcastCopied: false,
+        copiedInvestorEmail: '',
+
+        pipelineStages: [
+          'Lead',
+          'Underwriting',
+          'Off-Market Pitch',
+          'NCND Signed',
+          'Under Contract',
+          'Escrow Closed',
+        ],
+        dealStage: 0,
+        matchToast: '',
+        emailsCopied: false,
+        copiedContract: '',
+        copiedStructure: '',
+        /** Phase 3 — immutable contract snapshots (not live getters) */
+        contracts: {
+          teaser: '',
+          referralAgreement: '',
+          memo: '',
+          wireInstructions: '',
+        },
+        contractsStale: false,
+        signals: {
+          assessedValue: 0,
+          pricePerSqft: 0,
+          daysOnMarket: 0,
+          priceRangeMin: 0,
+          priceRangeMax: 0,
+        },
+        heuristics: {
+          derivedARV: 0,
+          derivedRent: 0,
+        },
+        fieldFlags: {
+          arv: '',
+          monthlyRent: '',
+          rehab: '',
+        },
+        fieldFlash: {
+          listPrice: false,
+          arv: false,
+          rehab: false,
+          fee: false,
+          monthlyRent: false,
+          annualTaxes: false,
+          zip: false,
+        },
+        _matchWatchReady: false,
+
+        init() {
+          this.loadFromStorage();
+          this.clampReferralFee();
+          this.rebuildBuyersZipIndex();
+          this.invalidateMatchCache();
+
+          // Phase 1: no deep $watch('deal') — fee clamp via @input only.
+          // Phase 2: invalidate CRM match cache when deal ZIP or price changes.
+          this.$watch(
+            () => String(this.deal.zip || '') + '|' + String(this.deal.listPrice || 0),
+            () => {
+              this.invalidateMatchCache();
+              this.onDealCriteriaChanged();
+            }
+          );
+
+          this.$watch('buyers', () => {
+            this.saveToStorage();
+            this.onDealCriteriaChanged();
+          }, { deep: true });
+
+          this.$watch('dealStage', () => {
+            this.saveToStorage();
+            this.refreshContracts();
+          });
+
+          this.$nextTick(() => {
+            this._matchWatchReady = true;
+            this.refreshContracts();
+          });
+        },
+
+        newBuyerId() {
+          try {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+              return crypto.randomUUID();
+            }
+          } catch { /* fall through */ }
+          return 'buyer-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+        },
+
+        rebuildBuyersZipIndex() {
+          const map = new Map();
+          map.set('ALL', []);
+          for (let i = 0; i < this.buyers.length; i++) {
+            const buyer = this.buyers[i];
+            const key = String(buyer.targetZip || '').trim().toUpperCase() || 'ALL';
+            if (!map.has(key)) map.set(key, []);
+            map.get(key).push(buyer);
+          }
+          this.buyersByZip = map;
+          this._buyersRevision++;
+        },
+
+        invalidateMatchCache() {
+          this._matchCacheKey = '';
+          this.recomputeMatchedBuyerIds();
+        },
+
+        /**
+         * Soft-match: ZIP (or ALL) AND Budget >= List Price.
+         * Cap Rate is scoring-only — never hard-filters when rent/cap is zero.
+         */
+        recomputeMatchedBuyerIds() {
+          const dealZip = String(this.deal.zip || '').trim();
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          const cacheKey = dealZip + '|' + listPrice + '|' + this._buyersRevision;
+
+          if (cacheKey === this._matchCacheKey && Array.isArray(this.matchedBuyerIds)) {
+            return this.matchedBuyerIds;
+          }
+
+          if (!(this.buyersByZip instanceof Map)) {
+            this.rebuildBuyersZipIndex();
+          }
+
+          const candidates = [];
+          const zipKey = dealZip;
+          if (zipKey && this.buyersByZip.has(zipKey)) {
+            candidates.push(...this.buyersByZip.get(zipKey));
+          }
+          // Also try numeric-string forms present in index
+          if (zipKey && this.buyersByZip.has(String(Number(zipKey)))) {
+            candidates.push(...this.buyersByZip.get(String(Number(zipKey))));
+          }
+          if (this.buyersByZip.has('ALL')) {
+            candidates.push(...this.buyersByZip.get('ALL'));
+          }
+
+          const seen = new Set();
+          const ids = [];
+          for (let i = 0; i < candidates.length; i++) {
+            const buyer = candidates[i];
+            if (!buyer || seen.has(buyer.id)) continue;
+            seen.add(buyer.id);
+
+            const buyerZip = String(buyer.targetZip || '').trim().toUpperCase();
+            const zipOk = buyerZip === 'ALL' || (dealZip !== '' && buyerZip === dealZip.toUpperCase());
+            const budgetOk = listPrice > 0 && this.safeNumber(buyer.maxBudget) >= listPrice;
+            if (zipOk && budgetOk) ids.push(buyer.id);
+          }
+
+          this.matchedBuyerIds = ids;
+          this._matchCacheKey = cacheKey;
+          return ids;
+        },
+
+        scoreBuyerMatch(buyer) {
+          const dealZip = String(this.deal.zip || '').trim();
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          const buyerZip = String(buyer.targetZip || '').trim().toUpperCase();
+          let matchScore = 0;
+
+          if (buyerZip === 'ALL' || (dealZip && buyerZip === dealZip.toUpperCase())) matchScore += 40;
+          if (listPrice > 0 && this.safeNumber(buyer.maxBudget) >= listPrice) matchScore += 35;
+
+          // Soft Cap Rate score — skip when monthlyRent is 0 (cap artificially zero)
+          const rent = this.safeNumber(this.deal.monthlyRent);
+          if (rent > 0 && buyer.minCapRate != null) {
+            const dealCapRate = this.capRate;
+            if (dealCapRate >= this.safeNumber(buyer.minCapRate)) matchScore += 25;
+          }
+
+          return matchScore;
+        },
+
+        /** Resolve cached ids → buyer rows + soft scores (UI binding). */
+        get matchedBuyers() {
+          this.recomputeMatchedBuyerIds();
+          const byId = new Map();
+          for (let i = 0; i < this.buyers.length; i++) {
+            byId.set(this.buyers[i].id, this.buyers[i]);
+          }
+          const rows = [];
+          for (let i = 0; i < this.matchedBuyerIds.length; i++) {
+            const buyer = byId.get(this.matchedBuyerIds[i]);
+            if (!buyer) continue;
+            rows.push({ ...buyer, matchScore: this.scoreBuyerMatch(buyer) });
+          }
+          rows.sort((a, b) => b.matchScore - a.matchScore);
+          return rows;
+        },
+
+        clampReferralFee() {
+          let fee = Number(this.deal.fee);
+          if (!Number.isFinite(fee) || fee <= 0) fee = 5000;
+          fee = Math.min(18000, Math.max(1000, Math.round(fee)));
+          if (this.deal.fee !== fee) this.deal.fee = fee;
+        },
+
+        onDealCriteriaChanged() {
+          if (!this._matchWatchReady) return;
+          this.emailsCopied = false;
+          this.recomputeMatchedBuyerIds();
+          const count = this.matchedBuyerIds.length;
+          if (count > 0 && (this.deal.zip || this.deal.listPrice)) {
+            this.matchToast = 'AUTO-MATCH: ' + count + ' INVESTOR' + (count === 1 ? '' : 'S');
+          } else if (!this.matchToast || String(this.matchToast).startsWith('AUTO-MATCH')) {
+            this.matchToast = '';
+          }
+        },
+
+        get dynamicMatchButtonLabel() {
+          if (this.emailsCopied) return 'COPIED TO CLIPBOARD!';
+          const n = this.matchedBuyers.length;
+          if (n === 0) return 'NO MATCHING INVESTORS';
+          return '[!] ' + n + ' MATCHED INVESTOR' + (n === 1 ? '' : 'S') + ' FOUND - CLICK TO COPY EMAILS';
+        },
+
+        onDynamicMatchClick() {
+          if (this.matchedBuyers.length === 0) return;
+          this.copyAllMatchedEmails();
+          this.$nextTick(() => {
+            const el = this.$refs.matchedBuyersPanel;
+            if (el && typeof el.scrollIntoView === 'function') {
+              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          });
+        },
+
+        findMatchingInvestors() {
+          this.invalidateMatchCache();
+          this.onDynamicMatchClick();
+          const count = this.matchedBuyerIds.length;
+          this.matchToast = count > 0
+            ? 'Found ' + count + ' Matching Investor' + (count === 1 ? '' : 's') + '!'
+            : 'Found 0 Matching Investors';
+          this.status = count > 0 ? 'MATCHED ' + count : 'NO MATCHES';
+        },
+
+        copyAllMatchedEmails() {
+          const emails = this.matchedBuyers
+            .map(b => (b.email || '').trim())
+            .filter(Boolean);
+          if (emails.length === 0) {
+            this.status = 'NO EMAILS';
+            return;
+          }
+          const csv = emails.join(', ');
+          navigator.clipboard.writeText(csv).then(() => {
+            this.emailsCopied = true;
+            this.status = 'COPIED TO CLIPBOARD!';
+            this.matchToast = 'COPIED ' + emails.length + ' EMAIL' + (emails.length === 1 ? '' : 'S');
+            window.setTimeout(() => { this.emailsCopied = false; }, 2000);
+          }).catch(() => {
+            this.status = 'COPY FAILED';
+          });
+        },
+
+        copyContract(key) {
+          const map = {
+            teaser: this.contracts.teaser,
+            referral: this.contracts.referralAgreement,
+            memo: this.contracts.memo,
+          };
+          const text = map[key] || '';
+          if (!text) {
+            this.status = 'NO CONTRACT SNAPSHOT';
+            return;
+          }
+          navigator.clipboard.writeText(text).then(() => {
+            this.copiedContract = key;
+            this.status = 'COPIED TO CLIPBOARD!';
+            window.setTimeout(() => {
+              if (this.copiedContract === key) this.copiedContract = '';
+            }, 2000);
+          }).catch(() => {
+            this.status = 'COPY FAILED';
+          });
+        },
+
+        /**
+         * Rebuild immutable Module 3 contract snapshots from plain deal + metrics.
+         * Does not bind textareas to live getters.
+         */
+        refreshContracts() {
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          const zip = String(this.deal.zip || '').trim();
+
+          // Never snapshot $0 / ZIP TBD when underwriting already has a list price
+          if (listPrice > 0) {
+            const dealSnapshot = {
+              address: this.deal.address,
+              zip: zip || this.deal.zip || '',
+              listPrice,
+              arv: this.safeNumber(this.deal.arv) || this.heuristics.derivedARV || listPrice,
+              rehab: this.safeNumber(this.deal.rehab),
+              fee: this.safeNumber(this.deal.fee) || 5000,
+              monthlyRent: this.safeNumber(this.deal.monthlyRent) || this.heuristics.derivedRent || 0,
+              annualTaxes: this.safeNumber(this.deal.annualTaxes),
+              debtService: this.safeNumber(this.deal.debtService),
+              cashInvested: this.safeNumber(this.deal.cashInvested),
+              propertyType: this.deal.propertyType || 'SFR',
+            };
+            const metricsSnapshot = {
+              noi: (dealSnapshot.monthlyRent * 12) - dealSnapshot.annualTaxes,
+              capRate: listPrice
+                ? (((dealSnapshot.monthlyRent * 12) - dealSnapshot.annualTaxes) / listPrice) * 100
+                : 0,
+              cashOnCash: this.cashOnCash,
+              dscr: this.dscr,
+              mao: this.mao,
+              viabilityScore: this.viabilityScore,
+            };
+            const built = buildContracts(dealSnapshot, metricsSnapshot);
+            this.contracts = {
+              teaser: built.teaser,
+              referralAgreement: built.referralAgreement,
+              memo: built.memo,
+              wireInstructions: built.wireInstructions,
+            };
+          } else {
+            const dealSnapshot = {
+              address: this.deal.address,
+              zip: zip,
+              listPrice: 0,
+              arv: this.safeNumber(this.deal.arv),
+              rehab: this.safeNumber(this.deal.rehab),
+              fee: this.safeNumber(this.deal.fee) || 5000,
+              monthlyRent: this.safeNumber(this.deal.monthlyRent),
+              annualTaxes: this.safeNumber(this.deal.annualTaxes),
+              debtService: this.safeNumber(this.deal.debtService),
+              cashInvested: this.safeNumber(this.deal.cashInvested),
+              propertyType: this.deal.propertyType || 'SFR',
+            };
+            const metricsSnapshot = {
+              noi: this.noi,
+              capRate: this.capRate,
+              cashOnCash: this.cashOnCash,
+              dscr: this.dscr,
+              mao: this.mao,
+              viabilityScore: this.viabilityScore,
+            };
+            const built = buildContracts(dealSnapshot, metricsSnapshot);
+            this.contracts = {
+              teaser: built.teaser,
+              referralAgreement: built.referralAgreement,
+              memo: built.memo,
+              wireInstructions: built.wireInstructions,
+            };
+          }
+
+          this.contractsStale = false;
+          this.status = 'CONTRACTS SNAPSHOTTED';
+        },
+
+        getStateSnapshot() {
+          return {
+            schemaVersion: DEALROOM_SCHEMA_VERSION,
+            deal: this.deal,
+            targetZips: this.targetZips,
+            activeZips: this.activeZips,
+            zipMultiSelect: this.zipMultiSelect,
+            buyers: this.buyers,
+            dealStage: this.dealStage,
+            rawIngestionText: this.rawIngestionText,
+            leadHistory: this.leadHistory,
+            leadChats: this.leadChats,
+            intent: this.intent,
+            sellerFeedbackRaw: this.sellerFeedbackRaw,
+            sellerCounter: this.deal.sellerCounter,
+          };
+        },
+
+        applyState(data) {
+          if (data.deal && typeof data.deal === 'object') {
+            this.deal = {
+              ...this.deal,
+              ...data.deal,
+              listPrice: this.safeNumber(data.deal.listPrice),
+              arv: this.safeNumber(data.deal.arv),
+              rehab: this.safeNumber(data.deal.rehab),
+              fee: this.safeNumber(data.deal.fee) || 5000,
+              monthlyRent: this.safeNumber(data.deal.monthlyRent),
+              annualTaxes: this.safeNumber(data.deal.annualTaxes),
+              debtService: this.safeNumber(data.deal.debtService),
+              cashInvested: this.safeNumber(data.deal.cashInvested),
+              sellerCounter: data.deal.sellerCounter || data.sellerCounter || { counterPrice: 0, originalList: 0, closingCredits: 0, sellerFinancing: null, concessions: [], parsedAt: null },
+            };
+          }
+          if (Array.isArray(data.targetZips)) this.targetZips = structuredClone(data.targetZips);
+          if (Array.isArray(data.activeZips)) this.activeZips = structuredClone(data.activeZips).map(String);
+          if (typeof data.zipMultiSelect === 'boolean') this.zipMultiSelect = data.zipMultiSelect;
+          if (Array.isArray(data.buyers)) {
+            this.buyers = structuredClone(data.buyers).map((b) => ({
+              ...b,
+              id: b.id || this.newBuyerId(),
+              maxBudget: this.safeNumber(b.maxBudget),
+              minCapRate: this.safeNumber(b.minCapRate),
+              targetZip: b.targetZip || '',
+            }));
+            this.rebuildBuyersZipIndex();
+            this.invalidateMatchCache();
+          }
+          if (data.dealStage !== undefined) this.dealStage = data.dealStage;
+          if (data.rawIngestionText !== undefined) this.rawIngestionText = data.rawIngestionText;
+          if (Array.isArray(data.leadHistory)) this.leadHistory = structuredClone(data.leadHistory).slice(0, 20);
+          if (Array.isArray(data.leadChats)) this.leadChats = structuredClone(data.leadChats).slice(0, 20);
+          if (data.intent && typeof data.intent === 'object') {
+            this.intent = { ...this.intent, ...data.intent };
+          }
+          if (data.sellerFeedbackRaw !== undefined) this.sellerFeedbackRaw = data.sellerFeedbackRaw;
+          if (data.sellerCounter && !this.deal.sellerCounter?.counterPrice) {
+            this.deal = { ...this.deal, sellerCounter: data.sellerCounter };
+          }
+          this.clampReferralFee();
+          this.refreshContracts();
+        },
+
+        saveToStorage() {
+          try {
+            // Detach Alpine proxies before structuredClone to avoid DataCloneError
+            const plain = JSON.parse(JSON.stringify(this.getStateSnapshot()));
+            const snapshot = structuredClone(plain);
+            localStorage.setItem('dealroom_master_state', JSON.stringify(snapshot));
+          } catch {
+            this.status = 'SAVE FAILED';
+          }
+        },
+
+        loadFromStorage() {
+          try {
+            const raw = localStorage.getItem('dealroom_master_state');
+            if (!raw) {
+              this.buyersByZip = new Map([['ALL', []]]);
+              return;
+            }
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object') throw new Error('Invalid state shape');
+            if (parsed.schemaVersion && parsed.schemaVersion > DEALROOM_SCHEMA_VERSION) {
+              throw new Error('Unsupported schema version: ' + parsed.schemaVersion);
+            }
+            const data = structuredClone(parsed);
+            this.applyState(data);
+            this.status = 'STATE LOADED';
+          } catch {
+            try {
+              localStorage.removeItem('dealroom_master_state');
+            } catch { /* self-heal */ }
+            this.buyers = [];
+            this.rebuildBuyersZipIndex();
+            this.invalidateMatchCache();
+            this.status = 'STATE HEALED';
+          }
+        },
+
+        // Back-compat aliases used by Module 1 / export paths
+        saveState() { this.saveToStorage(); },
+        loadState() { this.loadFromStorage(); },
+
+        safeNumber(n) {
+          if (n == null || n === '') return 0;
+          if (typeof n === 'number') return Number.isFinite(n) ? n : 0;
+          return this.parseCurrencyToken(String(n));
+        },
+
+        /**
+         * Atomic currency sanitizer.
+         * Strips $, commas, spaces; expands k/M; Math.round.
+         * Never runs parseFloat on raw (unsanitized) text.
+         */
+        sanitizeCurrency(str) {
+          if (str == null || str === '') return 0;
+          let s = String(str).trim();
+          s = s.replace(/[$\s]/g, '');
+          s = s.replace(/,/g, '');
+          if (!s) return 0;
+
+          const m = s.match(/^(-?\d+(?:\.\d+)?)([kKmM])?$/);
+          if (!m) return 0;
+
+          let n = Number(m[1]);
+          if (!Number.isFinite(n)) return 0;
+
+          if (m[2]) {
+            const unit = m[2].toLowerCase();
+            n *= (unit === 'k' ? 1000 : 1000000);
+          }
+
+          return Math.round(n);
+        },
+
+        /**
+         * Full currency capture token (atomic comma groups — no mid-number cut).
+         * Matches: $164,000 | 164000 | 164k | $164,000.00
+         */
+        currencyCaptureRe() {
+          return '(\\$?(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d{1,2})?[kKmM]?)';
+        },
+
+        extractLabeledCurrency(text, keywordRe) {
+          const re = new RegExp(
+            keywordRe.source + '[:\\s=#\\-]*' + this.currencyCaptureRe(),
+            keywordRe.flags.includes('i') ? 'i' : 'i'
+          );
+          const match = text.match(re);
+          if (!match || match[1] == null) return 0;
+          return this.sanitizeCurrency(match[1]);
+        },
+
+        isolateZip(text) {
+          const presets = this.targetZips.map(String);
+
+          const labeled = text.match(
+            /(?:zip(?:\s*code)?|area|location)[:\s#\-]*(\d{5})(?:-\d{4})?\b/i
+          );
+          if (labeled && presets.includes(labeled[1])) return labeled[1];
+
+          // City, ST 12345 — reject bare house numbers
+          const cityState = text.match(
+            /\b[A-Za-z][A-Za-z.\s]{1,40},\s*[A-Z]{2}\s+(\d{5})(?:-\d{4})?\b/
+          );
+          if (cityState) return cityState[1];
+
+          for (let i = 0; i < presets.length; i++) {
+            const z = presets[i];
+            if (new RegExp('\\b' + z + '\\b').test(text)) return z;
+          }
+
+          return '';
+        },
+
+        /** Module 4 — NL intent classifier. Pure function of text; never mutates state. */
+        parseIntent(t) {
+          const text = String(t || '');
+          const intent = {
+            distressed: /distress|fixer|tlc\b|as-is|handyman|code violation|tear[- ]down/i.test(text),
+            lowCost: /low[- ]cost|cheap|afford|below market|discount|under\s*\$/i.test(text),
+            sellerFinancing: /seller financ|owner financ|subject[- ]to|subto|lease option/i.test(text),
+            matchBuyers: /match|buyer|investor/i.test(text),
+            emailSellers: /email|negotiat|offer|low[- ]?ball|anchor/i.test(text),
+            emailInvestors: /broadcast|forward|finder'?s fee|investor/i.test(text),
+            zipHint: this.isolateZip(text),
+            budgetHint: 0,
+          };
+          const budgetMatch = text.match(/under\s*\$?\s*([\d,]+)\s*k?/i);
+          if (budgetMatch) {
+            const hasK = /k\s*$/i.test(budgetMatch[0]);
+            intent.budgetHint = this.sanitizeCurrency(budgetMatch[1] + (hasK ? 'k' : ''));
+          }
+          return intent;
+        },
+
+        /** Module 4 — Smart Ingest: classify intent, run listing parser, apply low-cost budget fallback. */
+        runSmartIngest() {
+          const text = String(this.rawIngestionText || '');
+          if (!text.trim()) {
+            this.status = 'NO TEXT TO PARSE';
+            return;
+          }
+
+          const intent = this.parseIntent(text);
+          this.intent = intent;
+
+          const hasListingTokens = /(?:list\s*price|asking\s*price|purchase\s*price|price\s*range|\barv\b|rehab|rent|zip)/i.test(text);
+          if (hasListingTokens) {
+            this.parseRawText();
+          }
+
+          if (intent.lowCost && intent.budgetHint > 0 && this.safeNumber(this.deal.listPrice) === 0) {
+            this.deal = { ...this.deal, listPrice: intent.budgetHint };
+          }
+
+          this.saveState();
+
+          this.$nextTick(() => {
+            this.invalidateMatchCache();
+            this.onDealCriteriaChanged();
+            if (intent.emailSellers && this.$refs.sellerTiersPanel) {
+              this.$refs.sellerTiersPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            if (intent.emailInvestors && this.$refs.buyerBroadcastPanel) {
+              this.$refs.buyerBroadcastPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+
+          const flagCount = ['distressed', 'lowCost', 'sellerFinancing', 'matchBuyers', 'emailSellers', 'emailInvestors']
+            .filter((k) => intent[k]).length;
+          this.status = 'SMART INGEST: ' + flagCount + ' INTENT FLAG' + (flagCount === 1 ? '' : 'S') + ' DETECTED';
+
+          const chatZip = this.deal.zip || intent.zipHint || '';
+          const summary = 'Intents: ' + (this.activeIntentChips.join(', ') || 'none') +
+            ' | Core: ' + (hasListingTokens ? 'parsed' : 'no listing fields') +
+            ' | Verdict: ' + this.dealVerdict.verdict +
+            ' | Max Offer: ' + this.formatCurrency(this.maxOffer);
+          this.appendLeadChat(chatZip, text, summary);
+        },
+
+        /** Module 4 — append to (or start) a lead conversation thread, grouped by same-zip within a session. */
+        appendLeadChat(zip, userText, summary) {
+          const zipStr = zip || 'UNKNOWN';
+          if (this.activeChatZip === zipStr && this.leadChats.length && this.leadChats[0].zip === zipStr) {
+            this.leadChats[0].thread.push({ role: 'user', text: userText });
+            this.leadChats[0].thread.push({ role: 'system', text: summary });
+            this.leadChats[0].ts = Date.now();
+          } else {
+            this.leadChats = [
+              {
+                id: 'lead-' + Date.now(),
+                ts: Date.now(),
+                zip: zipStr,
+                thread: [
+                  { role: 'user', text: userText },
+                  { role: 'system', text: summary },
+                ],
+              },
+              ...this.leadChats,
+            ].slice(0, 20);
+          }
+          this.activeChatZip = zipStr;
+          this.saveState();
+        },
+
+        toggleChatExpand(id) {
+          this.expandedChats[id] = !this.expandedChats[id];
+        },
+
+        deleteLeadChat(id) {
+          this.leadChats = this.leadChats.filter((c) => c.id !== id);
+          if (!this.leadChats.some((c) => c.zip === this.activeChatZip)) {
+            this.activeChatZip = '';
+          }
+          this.saveState();
+        },
+
+        /** Chip labels for the currently-detected intent flags (Module 4 UI). */
+        get activeIntentChips() {
+          const labels = {
+            distressed: 'DISTRESSED',
+            lowCost: 'LOW COST',
+            sellerFinancing: 'SELLER FINANCING',
+            matchBuyers: 'MATCH BUYERS',
+            emailSellers: 'EMAIL SELLERS',
+            emailInvestors: 'EMAIL INVESTORS',
+          };
+          return Object.keys(labels).filter((k) => this.intent[k]).map((k) => labels[k]);
+        },
+
+        flashFields(keys) {
+          keys.forEach((key) => { this.fieldFlash[key] = true; });
+          window.setTimeout(() => {
+            keys.forEach((key) => { this.fieldFlash[key] = false; });
+          }, 1600);
+        },
+
+        /** Module 4 — click-to-restore a prior lead from history into the active deal. */
+        restoreLead(entry) {
+          this.deal = {
+            ...this.deal,
+            zip: entry.zip || '',
+            listPrice: this.safeNumber(entry.listPrice),
+            arv: this.safeNumber(entry.arv),
+          };
+          this.invalidateMatchCache();
+          this.onDealCriteriaChanged();
+          this.contractsStale = true;
+          this.saveState();
+          this.$nextTick(() => this.refreshContracts());
+          this.status = 'LEAD RESTORED — ZIP ' + (entry.zip || 'N/A');
+        },
+
+        parseRawText() {
+          try {
+            const text = String(this.rawIngestionText || '');
+            if (!text.trim()) {
+              this.status = 'NO TEXT TO PARSE';
+              console.log('[DealRoom Parser] Empty ingestion text');
+              return;
+            }
+
+            // ── CORE 5 ──
+            let listPrice = this.extractLabeledCurrency(
+              text,
+              /(?:list\s*price|asking\s*price|purchase\s*price|price\s*range)(?!\s*(?:per|\/)\s*month)/i
+            );
+            if (!listPrice) {
+              const priceMatch = text.match(
+                /(?:^|[\n\r]|;\s*)(?:price)(?!\s*(?:per|\/)\s*month)[:\s=#\-]*(\$?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?[kKmM]?)/i
+              );
+              if (priceMatch) listPrice = this.sanitizeCurrency(priceMatch[1]);
+            }
+            if (!listPrice) {
+              const dollarRe = /\$\s*((?:\d{1,3}(?:,\d{3})+|\d{5,})(?:\.\d{1,2})?)/g;
+              let dm;
+              while ((dm = dollarRe.exec(text)) !== null) {
+                const v = this.sanitizeCurrency(dm[1]);
+                if (v >= 10000) { listPrice = v; break; }
+              }
+            }
+
+            let arv = this.extractLabeledCurrency(
+              text,
+              /(?:arv|after[\s\-]*repair(?:ed)?\s*value|market\s*value)/i
+            );
+            let rehab = this.extractLabeledCurrency(
+              text,
+              /(?:estimated\s*rehab|rehab(?:\s*cost|\s*budget)?|renovation|repair\s*cost|repairs?|tlc)/i
+            );
+            let monthlyRent = this.extractLabeledCurrency(
+              text,
+              /(?:monthly\s*rent|rents?\s*for|gross\s*rent|(?<![a-z])rent(?!\s*to\s*own))/i
+            );
+            const annualTaxes = this.extractLabeledCurrency(
+              text,
+              /(?:annual\s*tax(?:es)?|tax\s*amount|property\s*tax(?:es)?|(?<![a-z])taxes?(?!\s*lien))/i
+            );
+            const zip = this.isolateZip(text);
+
+            // ── SECONDARY SIGNALS (4) ──
+            const assessedMatch = text.match(/assessed[^0-9$]*\$?\s*([\d,]+)/i);
+            const assessedValue = assessedMatch
+              ? this.sanitizeCurrency(assessedMatch[1])
+              : 0;
+
+            const ppsMatch = text.match(/(\$?\d+(?:\.\d+)?)\s*\/\s*sqft/i);
+            const pricePerSqft = ppsMatch
+              ? this.sanitizeCurrency(ppsMatch[1])
+              : 0;
+
+            const domMatch = text.match(/(\d+)\s*days/i);
+            const daysOnMarket = domMatch
+              ? this.sanitizeCurrency(domMatch[1])
+              : 0;
+
+            const rangeMatch = text.match(
+              /range[^\$]*\$?\s*([\d.,kKmM]+)\s*[-–]\s*\$?\s*([\d.,kKmM]+)/i
+            );
+            const priceRangeMin = rangeMatch
+              ? this.sanitizeCurrency(rangeMatch[1])
+              : 0;
+            const priceRangeMax = rangeMatch
+              ? this.sanitizeCurrency(rangeMatch[2])
+              : 0;
+
+            this.signals = {
+              assessedValue,
+              pricePerSqft,
+              daysOnMarket,
+              priceRangeMin,
+              priceRangeMax,
+            };
+
+            const signalsHit = [
+              assessedValue,
+              pricePerSqft,
+              daysOnMarket,
+              (priceRangeMin > 0 || priceRangeMax > 0) ? 1 : 0,
+            ].filter((v) => v > 0).length;
+
+            // ── DERIVED FALLBACKS (flagged, never silent write) ──
+            const flags = { arv: '', monthlyRent: '', rehab: '' };
+            let derivedARV = 0;
+            let derivedRent = 0;
+
+            if (!(arv > 0)) {
+              derivedARV = Math.max(listPrice || 0, assessedValue || 0);
+              flags.arv = derivedARV > 0 ? 'DERIVED' : 'MISSING';
+              arv = 0;
+            }
+            if (!(monthlyRent > 0)) {
+              derivedRent = listPrice > 0 ? Math.round(listPrice * 0.008) : 0;
+              flags.monthlyRent = derivedRent > 0 ? 'DERIVED' : 'MISSING';
+              monthlyRent = 0;
+            }
+            if (!(rehab > 0)) {
+              flags.rehab = 'MISSING';
+              rehab = 0;
+            }
+
+            this.heuristics = { derivedARV, derivedRent };
+            this.fieldFlags = flags;
+
+            this.deal = {
+              ...this.deal,
+              address: '',
+              zip: zip || '',
+              listPrice: listPrice > 0 ? listPrice : 0,
+              arv: arv > 0 ? arv : 0,
+              rehab: rehab > 0 ? rehab : 0,
+              monthlyRent: monthlyRent > 0 ? monthlyRent : 0,
+              annualTaxes: annualTaxes > 0 ? annualTaxes : 0,
+            };
+
+            const five = [
+              ['listPrice', this.deal.listPrice],
+              ['arv', this.deal.arv],
+              ['rehab', this.deal.rehab],
+              ['monthlyRent', this.deal.monthlyRent],
+              ['annualTaxes', this.deal.annualTaxes],
+            ];
+            const hitKeys = five.filter(([, v]) => v > 0).map(([k]) => k);
+            const coreParsed = hitKeys.length;
+
+            this.flashFields(hitKeys);
+
+            if (coreParsed > 0) {
+              this.leadHistory = [
+                {
+                  ts: Date.now(),
+                  zip: this.deal.zip || '',
+                  listPrice: this.deal.listPrice,
+                  arv: this.deal.arv,
+                  verdict: this.dealVerdict.verdict,
+                },
+                ...this.leadHistory,
+              ].slice(0, 20);
+            }
+
+            this.saveState();
+            this.onDealCriteriaChanged();
+
+            this.contractsStale = true;
+            this.status = 'PARSED ' + coreParsed + '/5 CORE · ' + signalsHit + '/4 SIGNALS';
+
+            this.$nextTick(() => {
+              this.refreshContracts();
+            });
+
+            console.log('[DealRoom Parser] Extraction:', {
+              core: {
+                zip: this.deal.zip,
+                listPrice: this.deal.listPrice,
+                arv: this.deal.arv,
+                rehab: this.deal.rehab,
+                monthlyRent: this.deal.monthlyRent,
+                annualTaxes: this.deal.annualTaxes,
+              },
+              signals: this.signals,
+              heuristics: this.heuristics,
+              fieldFlags: this.fieldFlags,
+              coreParsed,
+              signalsHit,
+            });
+          } catch (err) {
+            console.error('[DealRoom Parser] PARSING ERROR:', err);
+            this.status = 'PARSING ERROR';
+          }
+        },
+
+        applyHeuristic(field) {
+          if (field === 'arv' && this.heuristics.derivedARV > 0) {
+            this.deal = { ...this.deal, arv: this.heuristics.derivedARV };
+            this.fieldFlags = { ...this.fieldFlags, arv: 'DERIVED' };
+            this.flashFields(['arv']);
+          } else if (field === 'monthlyRent' && this.heuristics.derivedRent > 0) {
+            this.deal = { ...this.deal, monthlyRent: this.heuristics.derivedRent };
+            this.fieldFlags = { ...this.fieldFlags, monthlyRent: 'DERIVED' };
+            this.flashFields(['monthlyRent']);
+          }
+          this.contractsStale = true;
+          this.saveState();
+          this.onDealCriteriaChanged();
+          this.$nextTick(() => this.refreshContracts());
+          this.status = 'HEURISTIC APPLIED: ' + field.toUpperCase();
+        },
+
+        get sellerLeverage() {
+          let score = 0;
+          const dom = this.safeNumber(this.signals.daysOnMarket);
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          const assessed = this.safeNumber(this.signals.assessedValue);
+          const rMin = this.safeNumber(this.signals.priceRangeMin);
+          const rMax = this.safeNumber(this.signals.priceRangeMax);
+
+          if (dom >= 90) score += 40;
+          if (assessed > 0 && listPrice > assessed * 1.25) score += 30;
+          if (assessed > 0) score += 20;
+          if (rMin > 0 && rMax > 0 && rMin === rMax) score += 10;
+
+          return Math.min(100, Math.max(0, score));
+        },
+
+        get negotiationMatrix() {
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          const maoVal = this.mao;
+          const cap = this.capRate;
+          const dscrVal = this.dscr;
+          const leverage = this.sellerLeverage;
+          const dom = this.safeNumber(this.signals.daysOnMarket);
+          const assessed = this.safeNumber(this.signals.assessedValue);
+          const delta = this.assessedDelta;
+          const usd = (n) => this.formatCurrency(n);
+          return [
+            {
+              label: 'MAO',
+              value: usd(maoVal),
+              weight: '30%',
+              justification: 'MAO ' + usd(maoVal) + (listPrice > 0 ? (maoVal >= listPrice ? ' ≥ List ' + usd(listPrice) : ' < List ' + usd(listPrice)) : ' (list price not set)'),
+            },
+            {
+              label: 'Cap Rate',
+              value: this.formatPct(cap),
+              weight: '20%',
+              justification: 'Cap Rate ' + this.formatPct(cap) + (cap >= 8 ? ' ≥ 8.00% threshold' : ' < 8.00% threshold'),
+            },
+            {
+              label: 'DSCR',
+              value: this.formatRatio(dscrVal),
+              weight: '15%',
+              justification: 'DSCR ' + this.formatRatio(dscrVal) + (dscrVal >= 1.0 ? ' ≥ 1.00 (covers debt)' : ' < 1.00 (short of debt coverage)'),
+            },
+            {
+              label: 'Seller Leverage',
+              value: leverage + '/100',
+              weight: '20%',
+              justification: 'Leverage score ' + leverage + '/100 from DOM / assessed / range signals',
+            },
+            {
+              label: 'DOM',
+              value: dom > 0 ? dom + ' days' : '—',
+              weight: '10%',
+              justification: dom >= 90 ? 'DOM ' + dom + ' ≥ 90 → motivated seller' : (dom > 0 ? 'DOM ' + dom + ' < 90 threshold' : 'DOM not disclosed'),
+            },
+            {
+              label: 'Assessed Delta',
+              value: usd(delta),
+              weight: '5%',
+              justification: 'List ' + usd(listPrice) + ' vs Assessed ' + usd(assessed) + ' = Δ ' + usd(delta),
+            },
+          ];
+        },
+
+        /** Pure — seller offer email for a given tier. Returns { subject, body }. */
+        sellerEmailTemplate(tier) {
+          const zip = this.deal.zip || 'PENDING';
+          const address = this.deal.address || ('ZIP ' + zip);
+          const subject = 'Offer — ' + address;
+          const dom = this.safeNumber(this.signals.daysOnMarket);
+          const assessed = this.safeNumber(this.signals.assessedValue);
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          const leverageCitations = [
+            dom > 0
+              ? '• Days on market: ' + dom + (dom >= 90 ? ' (motivated seller signal)' : '')
+              : '• Days on market: not disclosed',
+            assessed > 0
+              ? '• Assessed delta: List ' + this.formatCurrency(listPrice) + ' vs Assessed ' + this.formatCurrency(assessed) + ' (Δ ' + this.formatCurrency(this.assessedDelta) + ')'
+              : '• Assessed value: not disclosed',
+          ];
+          const lines = [
+            'Subject: ' + subject,
+            '',
+            'Hello,',
+            '',
+            'I am prepared to present a clean cash offer of ' + this.formatCurrency(tier.price) +
+            ' on ' + address + ' (list ' + this.formatCurrency(listPrice) + ').',
+            '',
+            'Market context:',
+            ...leverageCitations,
+            '',
+            'Offer terms:',
+            '• Condition: AS-IS (no repair credits)',
+            '• 14-day cash close',
+            '• This offer expires in 48 hours',
+            '',
+            'If aligned, reply with preferred title company and we lock it.',
+            '',
+            'Respectfully,',
+            'DealRoom Scout',
+          ];
+          return { subject, body: lines.join('\n') };
+        },
+
+        /** Pure — investor broadcast email for a given matched buyer. Returns { subject, body }. */
+        investorEmailTemplate(buyer) {
+          const zip = this.deal.zip || 'PENDING';
+          const capStr = this.formatPct(this.capRate);
+          const subject = 'OFF-MARKET ' + zip + ' — ' + capStr + ' cap';
+          const structure = this.bestStructureForBuyer(buyer);
+          const counterPrice = this.deal.sellerCounter?.counterPrice || 0;
+          const lines = [
+            'Subject: ' + subject,
+            '',
+            'Hi ' + (buyer.entityName || '') + ',',
+            '',
+            'Off-market opportunity in ZIP ' + zip + ':',
+            '• List Price: ' + this.formatCurrency(this.deal.listPrice),
+            '• ARV: ' + this.formatCurrency(this.deal.arv),
+            '• Rehab: ' + this.formatCurrency(this.deal.rehab),
+            '• Monthly Rent: ' + this.formatCurrency(this.deal.monthlyRent),
+            '• Cap Rate: ' + capStr,
+            '• Seller Counter: ' + (counterPrice > 0 ? this.formatCurrency(counterPrice) : 'none'),
+            '',
+            "Finder's Fee: " + this.formatCurrency(this.deal.fee) + ' (disbursed via HUD-1 at closing)',
+            '',
+            structure
+              ? 'Best-fit structure for you: ' + structure.name + ' @ ' + this.formatCurrency(structure.priceToBuyer) + ' (' + structure.terms + ')'
+              : 'No structure currently fits your budget/cap parameters',
+            '',
+            '— DealRoom Terminal',
+          ];
+          return { subject, body: lines.join('\n') };
+        },
+
+        get sellerOfferTiers() {
+          const built = buildSellerOffer(
+            {
+              listPrice: this.safeNumber(this.deal.listPrice),
+              zip: this.deal.zip,
+              fee: this.safeNumber(this.deal.fee) || 5000,
+              mao: this.mao,
+            },
+            this.sellerLeverage,
+            this.signals,
+            this.maxOffer
+          );
+          return [built.brutal, built.fair, built.walkAway];
+        },
+
+        copyOfferTier(tier) {
+          navigator.clipboard.writeText(this.sellerEmailTemplate(tier).body).then(() => {
+            this.copiedOfferTier = tier.id;
+            this.status = 'OFFER TIER COPIED';
+            window.setTimeout(() => {
+              if (this.copiedOfferTier === tier.id) this.copiedOfferTier = '';
+            }, 2000);
+          }).catch(() => { this.status = 'COPY FAILED'; });
+        },
+
+        mailtoOfferTier(tier) {
+          const tmpl = this.sellerEmailTemplate(tier);
+          return 'mailto:?subject=' + encodeURIComponent(tmpl.subject) + '&body=' + encodeURIComponent(tmpl.body);
+        },
+
+        parseSellerCounter() {
+          try {
+            const text = String(this.sellerFeedbackRaw || '');
+            if (!text.trim()) {
+              this.status = 'NO COUNTER TEXT';
+              return;
+            }
+
+            let counterPrice = 0;
+            const labeled = text.match(
+              /(?:counter(?:\s*offer)?|countered?(?:\s*at)?|will\s*take|asking)[:\s]*\$?\s*([\d.,kKmM]+)/i
+            );
+            if (labeled) counterPrice = this.sanitizeCurrency(labeled[1]);
+            if (!counterPrice) {
+              const dollars = text.match(/\$\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?[kKmM]?)/);
+              if (dollars) counterPrice = this.sanitizeCurrency(dollars[1]);
+            }
+
+            const concessions = [];
+            let closingCredits = 0;
+            const creditMatch = text.match(
+              /(?:closing\s*credit|credit|concession)[^\$\d]*\$?\s*([\d.,kKmM]+)/i
+            );
+            if (creditMatch) {
+              closingCredits = this.sanitizeCurrency(creditMatch[1]);
+              if (closingCredits > 0) {
+                concessions.push('Closing credit ' + this.formatCurrency(closingCredits));
+              }
+            }
+
+            let sellerFinancing = 0;
+            if (/seller\s*financ/i.test(text) || /owner\s*financ/i.test(text)) {
+              const sfAmt = text.match(
+                /(?:seller|owner)\s*financ\w*[^\$\d]*\$?\s*([\d.,kKmM]+)/i
+              );
+              sellerFinancing = sfAmt ? this.sanitizeCurrency(sfAmt[1]) : 1;
+              concessions.push(
+                sellerFinancing > 1
+                  ? 'Seller financing ' + this.formatCurrency(sellerFinancing)
+                  : 'Seller financing requested'
+              );
+            }
+
+            if (!(counterPrice > 0)) {
+              this.status = 'COUNTER: NO PRICE FOUND';
+              return;
+            }
+
+            const originalList = this.deal.sellerCounter?.originalList
+              ? this.deal.sellerCounter.originalList
+              : this.safeNumber(this.deal.listPrice);
+
+            const sellerCounter = {
+              counterPrice,
+              originalList,
+              closingCredits,
+              sellerFinancing,
+              concessions,
+              parsedAt: new Date().toISOString(),
+            };
+
+            // One-tick recompute: update listPrice + sellerCounter together
+            this.deal = {
+              ...this.deal,
+              listPrice: counterPrice,
+              sellerCounter,
+            };
+
+            this.invalidateMatchCache();
+            this.onDealCriteriaChanged();
+            this.contractsStale = true;
+            this.saveToStorage();
+            this.$nextTick(() => {
+              this.refreshContracts();
+            });
+
+            this.status = 'COUNTER PARSED → ' + this.formatCurrency(counterPrice);
+          } catch (err) {
+            console.error('[DealRoom] parseSellerCounter error:', err);
+            this.status = 'COUNTER PARSE ERROR';
+          }
+        },
+
+        bestStructureForBuyer(buyer) {
+          const structures = this.dealStructures || [];
+          let best = structures[0] || null;
+          let bestScore = -1;
+          for (let i = 0; i < structures.length; i++) {
+            const s = structures[i];
+            const fits = (s.fitsBuyerIds || []).includes(buyer.id);
+            const budgetOk = this.safeNumber(buyer.maxBudget) >= s.priceToBuyer;
+            const capOk = buyer.minCapRate == null || s.buyerCapRate >= this.safeNumber(buyer.minCapRate);
+            const score = (fits ? 50 : 0) + (budgetOk ? 30 : 0) + (capOk ? 20 : 0) + s.buyerCapRate;
+            if (score > bestScore) {
+              bestScore = score;
+              best = s;
+            }
+          }
+          return best;
+        },
+
+        get buyerBroadcastTemplate() {
+          const counter = this.deal.sellerCounter;
+          const zip = this.deal.zip || 'PENDING';
+          const listNow = this.safeNumber(this.deal.listPrice);
+          const original = counter?.originalList
+            ? this.safeNumber(counter.originalList)
+            : listNow;
+          const discount = original > 0 ? ((original - listNow) / original) * 100 : 0;
+          const lines = [
+            'COUNTER UPDATE — ZIP ' + zip,
+            '',
+            counter?.counterPrice
+              ? 'Seller counter: ' + this.formatCurrency(counter.counterPrice)
+              : 'No seller counter on file — using current list ' + this.formatCurrency(listNow),
+            'Original list: ' + this.formatCurrency(original),
+            'Discount vs original: ' + this.formatPct(discount),
+            counter?.concessions?.length
+              ? 'Concessions: ' + counter.concessions.join('; ')
+              : 'Concessions: none noted',
+            '',
+            'URGENCY: Window is live — reply within 24h to lock your structure.',
+            'Verdict: ' + this.dealVerdict.verdict + ' · Viability ' + this.viabilityScore + '/100',
+            '',
+            'Best-fit structures by matched buyer:',
+          ];
+
+          const buyers = this.matchedBuyers || [];
+          if (!buyers.length) {
+            lines.push('• No matched buyers yet');
+          } else {
+            buyers.forEach((b) => {
+              const s = this.bestStructureForBuyer(b);
+              lines.push(
+                '• ' + b.entityName + ' <' + b.email + '> → ' +
+                (s ? s.name + ' @ ' + this.formatCurrency(s.priceToBuyer) : 'n/a')
+              );
+            });
+          }
+
+          lines.push('', '— DealRoom Terminal');
+          return lines.join('\n');
+        },
+
+        copyBroadcast() {
+          navigator.clipboard.writeText(this.buyerBroadcastTemplate).then(() => {
+            this.broadcastCopied = true;
+            this.status = 'BROADCAST COPIED';
+            window.setTimeout(() => { this.broadcastCopied = false; }, 2000);
+          }).catch(() => { this.status = 'COPY FAILED'; });
+        },
+
+        copyInvestorEmail(buyer) {
+          navigator.clipboard.writeText(this.investorEmailTemplate(buyer).body).then(() => {
+            this.copiedInvestorEmail = buyer.id;
+            this.status = 'INVESTOR EMAIL COPIED';
+            window.setTimeout(() => {
+              if (this.copiedInvestorEmail === buyer.id) this.copiedInvestorEmail = '';
+            }, 2000);
+          }).catch(() => { this.status = 'COPY FAILED'; });
+        },
+
+        mailtoBroadcastBuyer(buyer) {
+          const tmpl = this.investorEmailTemplate(buyer);
+          return 'mailto:' + (buyer.email || '') + '?subject=' + encodeURIComponent(tmpl.subject) + '&body=' + encodeURIComponent(tmpl.body);
+        },
+
+        // Legacy helpers retained for non-parser call sites (safeNumber / import)
+        parseCurrencyToken(raw) {
+          return this.sanitizeCurrency(raw);
+        },
+
+        extractMoney(text, patterns) {
+          for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (!match || match[1] == null) continue;
+            const value = this.sanitizeCurrency(match[1]);
+            if (value > 0) return value;
+          }
+          return 0;
+        },
+
+        extractZip(text) {
+          return this.isolateZip(text);
+        },
+
+        newBuyer: {
+          entityName: '',
+          email: '',
+          maxBudget: null,
+          targetZip: '',
+          minCapRate: null,
+        },
+
+        registerBuyer() {
+          this.buyers.push({
+            id: this.newBuyerId(),
+            entityName: this.newBuyer.entityName,
+            email: this.newBuyer.email,
+            maxBudget: this.safeNumber(this.newBuyer.maxBudget),
+            targetZip: this.newBuyer.targetZip,
+            minCapRate: this.safeNumber(this.newBuyer.minCapRate),
+          });
+          this.newBuyer = { entityName: '', email: '', maxBudget: null, targetZip: '', minCapRate: null };
+          this.rebuildBuyersZipIndex();
+          this.invalidateMatchCache();
+          this.saveToStorage();
+          this.status = 'BUYER ADDED';
+        },
+
+        deleteBuyer(id) {
+          this.buyers = this.buyers.filter(b => b.id !== id);
+          this.rebuildBuyersZipIndex();
+          this.invalidateMatchCache();
+          this.saveToStorage();
+          this.status = 'BUYER REMOVED';
+        },
+
+        advanceStage() {
+          if (this.dealStage < this.pipelineStages.length - 1) {
+            this.dealStage++;
+            this.refreshContracts();
+            this.status = 'STAGE: ' + this.pipelineStages[this.dealStage].toUpperCase();
+          }
+        },
+
+        regressStage() {
+          if (this.dealStage > 0) {
+            this.dealStage--;
+            this.refreshContracts();
+            this.status = 'STAGE: ' + this.pipelineStages[this.dealStage].toUpperCase();
+          }
+        },
+
+        get zipUniverse() {
+          const set = new Set(this.targetZips.map(String));
+          this.activeZips.forEach((z) => set.add(String(z)));
+          if (this.deal.zip) set.add(String(this.deal.zip));
+          return Array.from(set).sort((a, b) => Number(a) - Number(b));
+        },
+
+        get missingZipSuggestion() {
+          const candidate = this.deal.zip || this.intent.zipHint;
+          if (!candidate) return '';
+          const zipStr = String(candidate);
+          const exists = this.targetZips.some((z) => String(z) === zipStr);
+          return exists ? '' : zipStr;
+        },
+
+        toggleZipPreset(zip) {
+          const z = String(zip);
+          if (this.zipMultiSelect) {
+            const idx = this.activeZips.indexOf(z);
+            if (idx >= 0) this.activeZips.splice(idx, 1);
+            else this.activeZips.push(z);
+          } else {
+            this.activeZips = this.activeZips[0] === z ? [] : [z];
+          }
+          this.syncDealZipFromActiveZips();
+          this.saveState();
+        },
+
+        syncDealZipFromActiveZips() {
+          if (this.activeZips.length === 1) {
+            this.deal = { ...this.deal, zip: this.activeZips[0] };
+            this.invalidateMatchCache();
+            this.onDealCriteriaChanged();
+          }
+        },
+
+        addZipToPresets(zipStr) {
+          const numeric = Number(zipStr);
+          const value = Number.isFinite(numeric) && String(numeric).length === 5 ? numeric : zipStr;
+          if (!this.targetZips.some((z) => String(z) === String(value))) {
+            this.targetZips = [...this.targetZips, value];
+            this.saveState();
+          }
+          this.invalidateMatchCache();
+        },
+
+        get hotZoneDensity() {
+          if (!(this.buyersByZip instanceof Map)) this.rebuildBuyersZipIndex();
+          const counts = this.zipUniverse.map(zip => ({
+            zip,
+            count: (this.buyersByZip.get(String(zip)) || []).length,
+          }));
+          const max = Math.max(...counts.map(z => z.count), 1);
+          return counts.map(z => {
+            const filled = z.count > 0 ? Math.max(1, Math.round((z.count / max) * 10)) : 0;
+            return {
+              ...z,
+              bar: '[' + '█'.repeat(filled) + '░'.repeat(10 - filled) + ']',
+            };
+          });
+        },
+
+        get mao() {
+          // MAO = (ARV * 0.70) - Estimated Rehab - Referral / Finder's Fee
+          const arv = this.safeNumber(this.deal.arv);
+          const rehab = this.safeNumber(this.deal.rehab);
+          const referralFee = this.safeNumber(this.deal.fee) || 5000;
+          return (arv * 0.70) - rehab - referralFee;
+        },
+
+        get maxOffer() {
+          return Math.max(this.mao, 0);
+        },
+
+        get discountPct() {
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          if (!(listPrice > 0)) return 0;
+          const d = (listPrice - this.maxOffer) / listPrice;
+          return Number.isFinite(d) ? d : 0;
+        },
+
+        get assessedDelta() {
+          return this.safeNumber(this.deal.listPrice) - this.safeNumber(this.signals.assessedValue);
+        },
+
+        get dealVerdict() {
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          const maoVal = this.mao;
+          const cap = this.capRate;
+          const viab = this.viabilityScore;
+          const reasons = [];
+          const usd = (n) => this.formatCurrency(n);
+
+          if (maoVal >= listPrice && listPrice > 0) {
+            reasons.push('MAO ' + usd(maoVal) + ' >= LIST ' + usd(listPrice));
+          } else {
+            reasons.push('MAO ' + usd(maoVal) + ' < LIST ' + usd(listPrice));
+          }
+
+          if (cap >= 8) {
+            reasons.push('Cap Rate ' + this.formatPct(cap) + ' >= 8.00%');
+          } else {
+            reasons.push('Cap Rate ' + this.formatPct(cap) + ' < 8.00%');
+          }
+
+          if (viab >= 70) {
+            reasons.push('Viability ' + viab + '/100 >= 70');
+          } else {
+            reasons.push('Viability ' + viab + '/100 < 70');
+          }
+
+          const dom = this.safeNumber(this.signals.daysOnMarket);
+          if (dom >= 90) {
+            reasons.push('DOM ' + dom + ' → motivated seller');
+          } else if (dom > 0) {
+            reasons.push('DOM ' + dom + ' (below 90-day leverage threshold)');
+          }
+
+          const assessed = this.safeNumber(this.signals.assessedValue);
+          if (assessed > 0 && listPrice > assessed * 1.25) {
+            reasons.push(
+              'LIST ' + usd(listPrice) + ' > Assessed ' + usd(assessed) + ' × 1.25'
+            );
+          }
+
+          let verdict = 'NO-GO';
+          if (listPrice > 0 && maoVal >= listPrice && cap >= 8 && viab >= 70) {
+            verdict = 'GO';
+          } else if (maoVal > 0 && maoVal < listPrice) {
+            verdict = 'NEGOTIATE';
+          }
+
+          return { verdict, reasons };
+        },
+
+        get dealStructures() {
+          return buildDealStructures(
+            {
+              listPrice: this.safeNumber(this.deal.listPrice),
+              fee: this.safeNumber(this.deal.fee) || 5000,
+              debtService: this.safeNumber(this.deal.debtService),
+              monthlyRent: this.safeNumber(this.deal.monthlyRent),
+              annualTaxes: this.safeNumber(this.deal.annualTaxes),
+            },
+            {
+              mao: this.mao,
+              noi: this.noi,
+              capRate: this.capRate,
+            },
+            this.buyers
+          );
+        },
+
+        formatStructureText(structure) {
+          const lines = [
+            structure.name,
+            'Price to Buyer: ' + this.formatCurrency(structure.priceToBuyer),
+            'Terms: ' + structure.terms,
+            'Monthly Payment: ' + this.formatCurrency(structure.monthlyPayment),
+            'Buyer Cap Rate: ' + this.formatPct(structure.buyerCapRate),
+            'Buyer CoC: ' + this.formatPct(structure.buyerCoC),
+            'ZIP: ' + (this.deal.zip || 'PENDING'),
+            'List: ' + this.formatCurrency(this.deal.listPrice),
+            "Finder's Fee: " + this.formatCurrency(this.deal.fee),
+          ];
+          if (structure.fitsBuyers && structure.fitsBuyers.length) {
+            lines.push('Fit Buyers: ' + structure.fitsBuyers.map((b) => b.entityName).join(', '));
+          }
+          return lines.join('\n');
+        },
+
+        copyDealStructure(structure) {
+          const text = this.formatStructureText(structure);
+          navigator.clipboard.writeText(text).then(() => {
+            this.copiedStructure = structure.name;
+            this.status = 'STRUCTURE COPIED';
+            window.setTimeout(() => {
+              if (this.copiedStructure === structure.name) this.copiedStructure = '';
+            }, 2000);
+          }).catch(() => {
+            this.status = 'COPY FAILED';
+          });
+        },
+
+        mailtoStructure(buyer, structure) {
+          const subject = encodeURIComponent(
+            'Deal Structure: ' + structure.name + ' · ZIP ' + (this.deal.zip || '')
+          );
+          const body = encodeURIComponent(
+            'Hi ' + (buyer.entityName || '') + ',\n\n' +
+            this.formatStructureText(structure) +
+            '\n\n— DealRoom Terminal'
+          );
+          return 'mailto:' + (buyer.email || '') + '?subject=' + subject + '&body=' + body;
+        },
+
+        get flipSpread() {
+          return this.mao - this.safeNumber(this.deal.listPrice);
+        },
+
+        get rentRule() {
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          if (!listPrice) return 0;
+          return (this.safeNumber(this.deal.monthlyRent) / listPrice) * 100;
+        },
+
+        get noi() {
+          return (this.safeNumber(this.deal.monthlyRent) * 12) - this.safeNumber(this.deal.annualTaxes);
+        },
+
+        get capRate() {
+          const listPrice = this.safeNumber(this.deal.listPrice);
+          if (!listPrice) return 0;
+          const rate = (this.noi / listPrice) * 100;
+          return Number.isFinite(rate) ? rate : 0;
+        },
+
+        get dscr() {
+          const debtService = this.safeNumber(this.deal.debtService);
+          if (!debtService) return 0;
+          const ratio = this.noi / debtService;
+          return Number.isFinite(ratio) ? ratio : 0;
+        },
+
+        get cashOnCash() {
+          const cashInvested = this.safeNumber(this.deal.cashInvested);
+          if (!cashInvested) return 0;
+          const rate = ((this.noi - this.safeNumber(this.deal.debtService)) / cashInvested) * 100;
+          return Number.isFinite(rate) ? rate : 0;
+        },
+
+        get viabilityScore() {
+          const flipPts = this.flipSpread > 0
+            ? Math.min(30, (this.flipSpread / 25000) * 30)
+            : 0;
+          const rentPts = Math.min(20, (this.rentRule / 1.0) * 20);
+          const dscrPts = this.dscr >= 1.0
+            ? Math.min(25, ((this.dscr - 1.0) / 0.5) * 12.5 + 12.5)
+            : Math.max(0, this.dscr * 12.5);
+          const capPts = Math.min(15, (this.capRate / 10) * 15);
+          const cocPts = Math.min(10, Math.max(0, (this.cashOnCash / 12) * 10));
+          const total = flipPts + rentPts + dscrPts + capPts + cocPts;
+          if (!Number.isFinite(total)) return 0;
+          return Math.round(Math.min(100, Math.max(0, total)));
+        },
+
+        get viabilityBar() {
+          const filled = Math.round(this.viabilityScore / 10);
+          const empty = 10 - filled;
+          return '[' + '█'.repeat(filled) + '░'.repeat(empty) + ']';
+        },
+
+        formatCurrency(n) {
+          const v = this.safeNumber(n);
+          return '$' + Math.round(v).toLocaleString('en-US');
+        },
+
+        formatPct(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return '0.00%';
+          return v.toFixed(2) + '%';
+        },
+
+        formatRatio(n) {
+          const v = Number(n);
+          if (!Number.isFinite(v)) return '0.00';
+          return v.toFixed(2);
+        },
+
+        exportJson() {
+          const payload = this.getStateSnapshot();
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'dealroom_backup.json';
+          a.click();
+          URL.revokeObjectURL(url);
+          this.status = 'EXPORTED';
+        },
+
+        importJson() {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'application/json,.json';
+          input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              try {
+                const data = JSON.parse(ev.target.result);
+                this.applyState(data);
+                this.saveState();
+                this.status = 'IMPORTED';
+              } catch {
+                this.status = 'IMPORT ERROR';
+              }
+            };
+            reader.readAsText(file);
+          };
+          input.click();
+        },
+      };
+    }
+  </script>
+</body>
+</html>

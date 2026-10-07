@@ -1,0 +1,40 @@
+name: DealRoom Daily Agent
+
+# Runs the daily deal-discovery/matching batch (js/agent.js) once a day, and on demand.
+# Requires: this folder pushed to a GitHub repo, and repo Settings -> Actions -> General ->
+# Workflow permissions set to "Read and write permissions" (so the commit-back step can push).
+# Free tier: public repos get unlimited Actions minutes; private repos get 2,000 min/month free.
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # 09:00 UTC daily
+  workflow_dispatch: {}    # manual "Run workflow" button
+
+permissions:
+  contents: write
+
+jobs:
+  daily-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run daily deal cycle
+        run: node js/agent.js
+        env:
+          DEALROOM_FINDER_NAME: ${{ secrets.DEALROOM_FINDER_NAME }}
+          DEALROOM_STATE: ${{ secrets.DEALROOM_STATE }}
+
+      - name: Commit updated data/daily_deals.json
+        run: |
+          git config user.name "dealroom-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/daily_deals.json
+          git diff --cached --quiet || git commit -m "Daily deal batch $(date -u +%Y-%m-%d)"
+          git push
