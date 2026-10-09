@@ -1,61 +1,95 @@
 // remittance-generator.js
-// Automated Offshore Invoicing & Foreign Wire Payload Generator
+/**
+ * Remittance Staging Engine for Ebisa Wakjira (Ethiopia)
+ * Dispatches free Telegram Push Alerts for instant 1-click manual payment approval.
+ */
 
-function generateOffshoreInvoice(dealDetails, consultantInfo, localBankInfo) {
-  const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
-  
-  const invoicePayload = {
-    invoiceHeader: {
-      invoiceNumber: invoiceNumber,
-      date: new Date().toISOString().split('T')[0],
-      serviceCategory: "Offshore Real Estate Lead Generation & Market Consultation Services",
-      taxStatus: "Zero-Rated Foreign Service Export"
+require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+
+const PENDING_FILE = path.join(__dirname, 'pending-remittances.json');
+
+async function sendTelegramAlert(messageText) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!botToken || botToken.includes('your_telegram_bot_token')) {
+    console.log("  [TELEGRAM ALERT] Token not configured. Alert logged to console only.");
+    return;
+  }
+
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: messageText,
+        parse_mode: "Markdown"
+      })
+    });
+    console.log("  [TELEGRAM ALERT] Instant mobile notification sent to Telegram.");
+  } catch (error) {
+    console.error("  [TELEGRAM ERROR]:", error.message);
+  }
+}
+
+function stageRemittancePayment(deal, finderFeePercentage = 0.02) {
+  const finderFeeUSD = Math.round(deal.purchasePrice * finderFeePercentage);
+  const transactionId = `REM-${Date.now()}`;
+  const beneficiaryName = process.env.BENEFICIARY_NAME || "Ebisa Wakjira";
+  const beneficiaryCountry = process.env.BENEFICIARY_COUNTRY || "Ethiopia";
+
+  const remittancePayload = {
+    transactionId,
+    timestamp: new Date().toISOString(),
+    status: "PENDING_HUMAN_APPROVAL",
+    dealReference: deal.address,
+    propertyValue: deal.purchasePrice,
+    payoutDetails: {
+      beneficiaryName,
+      beneficiaryCountry,
+      payoutCurrency: process.env.BENEFICIARY_CURRENCY || "ETB",
+      payoutChannel: "Commercial Bank of Ethiopia / Swift Wire",
+      amountUSD: finderFeeUSD,
+      feeType: "DealRoom Finder's Commission"
     },
-    biller: {
-      companyName: consultantInfo.fullName,
-      address: consultantInfo.address,
-      country: "Ethiopia"
-    },
-    client: {
-      closingEntity: dealDetails.titleCompanyOrBuyer,
-      propertyRef: dealDetails.propertyAddress,
-      assignmentFeeUsd: dealDetails.referralFeeUSD
-    },
-    bankingSWIFTRouting: {
-      beneficiaryName: localBankInfo.fullName,
-      accountNumber: localBankInfo.accountNumber,
-      swiftCode: localBankInfo.swiftCode,
-      bankName: localBankInfo.bankName,
-      branchCity: "Addis Ababa, Ethiopia",
-      intermediaryBank: localBankInfo.intermediaryBank || "Citibank N.A., New York (Standard USD Rail)",
-      paymentPurposeCode: "Export of IT & Professional Consulting Services"
+    manualIntervention: {
+      required: true,
+      approvalCommand: `node remittance-approval.js --approve ${transactionId}`
     }
   };
 
-  console.log("=================================================================");
-  console.log("       OFFSHORE REMITTANCE INVOICE & SWIFT PAYLOAD GENERATED     ");
-  console.log("=================================================================\n");
-  console.log(JSON.stringify(invoicePayload, null, 2));
+  // Save to pending queue file
+  let pending = [];
+  if (fs.existsSync(PENDING_FILE)) {
+    try { pending = JSON.parse(fs.readFileSync(PENDING_FILE, 'utf8')); } catch (e) { pending = []; }
+  }
+  pending.push(remittancePayload);
+  fs.writeFileSync(PENDING_FILE, JSON.stringify(pending, null, 2));
 
-  return invoicePayload;
+  console.log(`\n======================================================`);
+  console.log(`[REMITTANCE STAGED - MANUAL APPROVAL REQUIRED]`);
+  console.log(`Transaction ID: ${transactionId}`);
+  console.log(`Beneficiary: ${beneficiaryName} (${beneficiaryCountry})`);
+  console.log(`Payout Amount: $${finderFeeUSD} USD`);
+  console.log(`Status: PENDING_HUMAN_APPROVAL`);
+  console.log(`To approve payout, run: node remittance-approval.js --approve ${transactionId}`);
+  console.log(`======================================================\n`);
+
+  // Dispatch Mobile Alert via Telegram
+  const alertText = `🚨 *DEALROOM REMITTANCE APPROVAL REQUIRED*
+*Beneficiary:* ${beneficiaryName} (${beneficiaryCountry}) *Amount:* $${finderFeeUSD} USD
+*Property:* ${deal.address}
+*Transaction ID:* \`${transactionId}\`
+
+👉 *To Approve, run:*
+\`node remittance-approval.js --approve ${transactionId}\``;
+
+  sendTelegramAlert(alertText);
+
+  return remittancePayload;
 }
 
-// Sample Invocation
-generateOffshoreInvoice(
-  {
-    titleCompanyOrBuyer: "First National Title & Escrow LLC",
-    propertyAddress: "13521 West Ave, Cleveland, OH 44111",
-    referralFeeUSD: 3500.00
-  },
-  {
-    fullName: "Ebisa Diriba",
-    address: "Bole Sub-City, Addis Ababa, Ethiopia"
-  },
-  {
-    fullName: "Ebisa Diriba",
-    accountNumber: "1000123456789",
-    bankName: "Commercial Bank of Ethiopia (CBE)",
-    swiftCode: "CBETETAA",
-    intermediaryBank: "Citibank N.A., New York"
-  }
-);
+module.exports = { stageRemittancePayment };

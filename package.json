@@ -1,0 +1,24 @@
+{
+  "name": "dealroom_new",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ai-triage-helper.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ekoni-vibe/DealRoom_New.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ekoni-vibe/DealRoom_New/issues"
+  },
+  "homepage": "https://github.com/ekoni-vibe/DealRoom_New#readme",
+  "dependencies": {
+    "dotenv": "^18.0.6"
+  }
+}
