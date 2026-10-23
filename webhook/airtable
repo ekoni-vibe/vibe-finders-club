@@ -1,0 +1,160 @@
+app.post('/webhook/airtable', async (req, res) => {
+  try {
+    const payload = req.body;
+    
+    // Security validation: Reject if contains banking keywords
+    const payloadStr = JSON.stringify(payload).toLowerCase();
+    const bankingKeywords = ['routing', 'account', 'iban', 'swift', 'wire', 'bank'];
+    const hasBankingData = bankingKeywords.some(keyword => payloadStr.includes(keyword));
+    
+    if (hasBankingData) {
+      console.error('🚨 SECURITY ALERT: Webhook payload contains banking keywords');
+      return res.status(400).json({ 
+        error: 'Payload contains prohibited banking data',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Extract deal data from Airtable format
+    const deal = {
+      id: payload.id || Date.now().toString(),
+      address: payload.fields?.Address || payload.address || 'Unknown',
+      city: payload.fields?.City || payload.city || 'Unknown',
+      zip: payload.fields?.ZIP || payload.zip || '00000',
+      price: parseFloat(payload.fields?.Price || payload.price || 0),
+      arv: parseFloat(payload.fields?.ARV || payload.arv || 0),
+      rehab: parseFloat(payload.fields?.Rehab || payload.rehab || 0),
+      source: 'Airtable',
+      stage: 'Sourced',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Validate required fields
+    if (!deal.address || deal.address === 'Unknown') {
+      throw new Error('Missing required field: address');
+    }
+    
+    console.log(`Processing deal from Airtable: ${deal.address}, ${deal.city} ${deal.zip}`);
+    
+    // Simple underwriting fallback
+    const underwrittenDeal = {
+      ...deal,
+      stage: 'Underwritten',
+      viabilityScore: calculateViabilityScore(deal),
+      offerType: determineOfferType(deal)
+    };
+    
+    // Save to triage-execution-log.json with deduplication
+    const fs = require('fs').promises;
+    const path = require('path');
+    const logPath = path.join(__dirname, '..', 'triage-execution-log.json');
+    
+    let existingLog = [];
+    try {
+      const data = await fs.readFile(logPath, 'utf8');
+      existingLog = JSON.parse(data);
+      console.log(`Loaded ${existingLog.length} existing deals from log`);
+    } catch (e) {
+      console.log('No existing triage log found, creating new one');
+    }
+    
+    // Deduplicate by address + zip
+    const exists = existingLog.some(d => 
+      d.address === deal.address && d.zip === deal.zip
+    );
+    
+    if (!exists) {
+      existingLog.push(underwrittenDeal);
+      await fs.writeFile(logPath, JSON.stringify(existingLog, null, 2), 'utf8');
+      console.log(`✅ Added new deal from Airtable: ${deal.address}`);
+    } else {
+      console.log(`⚠️ Duplicate deal skipped: ${deal.address}`);
+      // Update existing deal if newer
+      const existingIndex = existingLog.findIndex(d => 
+        d.address === deal.address && d.zip === deal.zip
+      );
+      if (existingIndex > -1) {
+        existingLog[existingIndex] = { ...existingLog[existingIndex], updatedAt: new Date().toISOString() };
+        await fs.writeFile(logPath, JSON.stringify(existingLog, null, 2), 'utf8');
+        console.log(`🔄 Updated existing deal: ${deal.address}`);
+      }
+    }
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Deal processed successfully',
+      dealId: underwrittenDeal.id,
+      action: exists ? 'updated' : 'created'
+    });
+    
+  } catch (error) {
+    console.error(' Webhook error:', error.message);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Helper functions
+function calculateViabilityScore(deal) {
+  if (!deal.arv || !deal.price) return 50;
+  const margin = deal.arv - deal.price;
+  const marginPercent = (margin / deal.arv) * 100;
+  if (marginPercent > 30) return 90;
+  if (marginPercent > 20) return 75;
+  if (marginPercent > 10) return 60;
+  return 40;
+}
+
+function determineOfferType(deal) {
+  const score = calculateViabilityScore(deal);
+  if (score >= 75) return 'Premium Cash';
+  if (score >= 60) return 'Balloon Payment';
+  return 'Standard Cash';
+}
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    endpoint: '/webhook/airtable'
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    service: 'DealRoom Make.com Webhook',
+    version: '1.0.0',
+    endpoints: {
+      health: 'GET /health',
+      webhook: 'POST /webhook/airtable'
+    }
+  });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log('===========================================');
+  console.log('🚀 Make.com Webhook Server Started');
+  console.log(`📡 Port: ${PORT}`);
+  console.log(`🔗 Webhook URL: http://localhost:${PORT}/webhook/airtable`);
+  console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
+  console.log('===========================================');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  process.exit(0);
+});

@@ -5,5 +5,6 @@ node_modules/
 dist/
 coverage/
 *.log
+.triage-ai-cache.json
 .DS_Store
 Thumbs.db

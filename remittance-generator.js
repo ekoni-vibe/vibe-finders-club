@@ -45,16 +45,9 @@ function stageRemittancePayment(deal, finderFeePercentage = 0.02) {
     transactionId,
     timestamp: new Date().toISOString(),
     status: "PENDING_HUMAN_APPROVAL",
+    settlementStatus: "Pending Manual External Settlement",
     dealReference: deal.address,
     propertyValue: deal.purchasePrice,
-    payoutDetails: {
-      beneficiaryName,
-      beneficiaryCountry,
-      payoutCurrency: process.env.BENEFICIARY_CURRENCY || "ETB",
-      payoutChannel: "Commercial Bank of Ethiopia / Swift Wire",
-      amountUSD: finderFeeUSD,
-      feeType: "DealRoom Finder's Commission"
-    },
     manualIntervention: {
       required: true,
       approvalCommand: `node remittance-approval.js --approve ${transactionId}`

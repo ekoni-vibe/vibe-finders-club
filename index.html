@@ -1031,29 +1031,35 @@
           <span class="border border-slate-700 bg-slate-800 px-2 py-1 text-[10px] uppercase tracking-wider text-slate-400">Sample deals</span>
         </div>
         <div class="flex gap-3 overflow-x-auto pb-3" aria-label="Deal pipeline stages">
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-sourcing">
-            <h4 id="stage-sourcing" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Sourcing <span class="text-[10px] font-normal text-slate-500" data-stage-count="Sourcing"></span>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-sourced">
+            <h4 id="stage-sourced" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Sourced <span class="text-[10px] font-normal text-slate-500" data-stage-count="Sourced"></span>
             </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Sourcing"></div>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Sourced"></div>
           </section>
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-initial-review">
-            <h4 id="stage-initial-review" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Initial Review <span class="text-[10px] font-normal text-slate-500" data-stage-count="Initial Review"></span>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-underwritten">
+            <h4 id="stage-underwritten" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Underwritten <span class="text-[10px] font-normal text-slate-500" data-stage-count="Underwritten"></span>
             </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Initial Review"></div>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Underwritten"></div>
           </section>
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-due-diligence">
-            <h4 id="stage-due-diligence" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Due Diligence <span class="text-[10px] font-normal text-slate-500" data-stage-count="Due Diligence"></span>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-teaser-sent">
+            <h4 id="stage-teaser-sent" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Teaser Sent <span class="text-[10px] font-normal text-slate-500" data-stage-count="Teaser Sent"></span>
             </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Due Diligence"></div>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Teaser Sent"></div>
           </section>
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-term-sheet">
-            <h4 id="stage-term-sheet" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Term Sheet <span class="text-[10px] font-normal text-slate-500" data-stage-count="Term Sheet"></span>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-ncnd-signed">
+            <h4 id="stage-ncnd-signed" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              NCND Signed <span class="text-[10px] font-normal text-slate-500" data-stage-count="NCND Signed"></span>
             </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Term Sheet"></div>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="NCND Signed"></div>
+          </section>
+          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-under-contract">
+            <h4 id="stage-under-contract" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
+              Under Contract <span class="text-[10px] font-normal text-slate-500" data-stage-count="Under Contract"></span>
+            </h4>
+            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Under Contract"></div>
           </section>
           <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-closed">
             <h4 id="stage-closed" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
@@ -1112,10 +1118,17 @@
             <div
               class="border-2 p-2 min-h-[140px] flex flex-col"
               :class="dealStage === index ? 'border-emerald-600 bg-slate-800' : 'border-slate-700 bg-slate-800/50'"
+              @dragover.prevent
+              @drop.prevent="dropDealOnStage(index)"
             >
               <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-2 border-b border-slate-700 pb-1" x-text="stage"></div>
               <template x-if="dealStage === index">
-                <div class="flex-1 flex flex-col justify-between gap-2">
+                <div
+                  class="flex-1 flex flex-col justify-between gap-2"
+                  draggable="true"
+                  @dragstart="startStageDrag($event)"
+                  @dragend="draggedDealStage = null"
+                >
                   <div class="text-xs space-y-1">
                     <div class="text-slate-300 font-bold" x-text="'ZIP ' + (deal.zip || '—')"></div>
                     <div class="text-slate-500" x-text="formatCurrency(deal.listPrice)"></div>
@@ -1149,6 +1162,51 @@
         <div class="mt-2 flex items-center justify-between text-[10px] text-slate-500 uppercase">
           <span x-text="'Stage ' + (dealStage + 1) + ' / ' + pipelineStages.length"></span>
           <span x-text="pipelineStages[dealStage]"></span>
+        </div>
+      </div>
+
+      <div
+        x-cloak
+        x-show="showNCNDModal"
+        x-transition.opacity
+        class="modal-overlay fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-slate-950/90 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ncnd-modal-title"
+      >
+        <div class="modal-content w-full max-w-2xl border-2 border-red-500 bg-white p-6 text-slate-900 shadow-2xl">
+          <h2 id="ncnd-modal-title" class="text-2xl font-bold text-red-600">⚠️ MANUAL BANKING STEP REQUIRED</h2>
+          <div class="alert-box my-4 border-2 border-red-400 bg-red-50 p-4">
+            <p class="font-bold text-red-800">DO NOT ENTER WIRE OR BANKING DETAILS IN THIS APPLICATION</p>
+            <p class="mt-2 text-sm text-red-700">This software does NOT store or transmit banking information for security compliance.</p>
+          </div>
+          <h3 class="mt-4 font-bold">Required Manual Steps:</h3>
+          <ol class="mt-2 list-inside list-decimal space-y-2">
+            <li>Generate professional consulting invoice at <a href="https://waveapps.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">waveapps.com</a> (free tier)</li>
+            <li>Manually email SWIFT wire instructions (CBE/Awash/Dashen) OR Western Union/MoneyGram details directly to the Title/Escrow Company</li>
+            <li>Confirm the finder's fee is listed as a line-item on the final settlement statement (HUD-1)</li>
+            <li>Only after completing steps 1-3, click "Confirm External Completion" below</li>
+          </ol>
+          <div class="mt-4 text-xs text-gray-600">
+            <p>Supported Ethiopian Banks:</p>
+            <ul class="list-inside list-disc">
+              <li>Commercial Bank of Ethiopia (CBE) - SWIFT: CBEETETX</li>
+              <li>Awash Bank - SWIFT: AWASHETAA</li>
+              <li>Dashen Bank - SWIFT: DASHETAA</li>
+            </ul>
+          </div>
+          <div class="mt-6 space-y-3">
+            <button
+              type="button"
+              @click="confirmNCNDExternalCompletion()"
+              class="rounded bg-green-600 px-6 py-2 text-white"
+            >✓ I've completed all manual steps externally</button>
+            <button
+              type="button"
+              @click="cancelNCNDTransition()"
+              class="ml-2 rounded bg-gray-400 px-6 py-2 text-white"
+            >Cancel</button>
+          </div>
         </div>
       </div>
 
@@ -1828,14 +1886,18 @@
         copiedInvestorEmail: '',
 
         pipelineStages: [
-          'Lead',
-          'Underwriting',
-          'Off-Market Pitch',
+          'Sourced',
+          'Underwritten',
+          'Teaser Sent',
           'NCND Signed',
           'Under Contract',
-          'Escrow Closed',
+          'Closed',
         ],
         dealStage: 0,
+        draggedDealStage: null,
+        pendingNCNDPreviousStage: null,
+        showNCNDModal: false,
+        ncndExternalCompletionAt: null,
         matchToast: '',
         emailsCopied: false,
         copiedContract: '',
@@ -2190,6 +2252,7 @@
             zipMultiSelect: this.zipMultiSelect,
             buyers: this.buyers,
             dealStage: this.dealStage,
+            ncndExternalCompletionAt: this.ncndExternalCompletionAt,
             rawIngestionText: this.rawIngestionText,
             leadHistory: this.leadHistory,
             leadChats: this.leadChats,
@@ -2230,6 +2293,7 @@
             this.invalidateMatchCache();
           }
           if (data.dealStage !== undefined) this.dealStage = data.dealStage;
+          if (data.ncndExternalCompletionAt !== undefined) this.ncndExternalCompletionAt = data.ncndExternalCompletionAt;
           if (data.rawIngestionText !== undefined) this.rawIngestionText = data.rawIngestionText;
           if (Array.isArray(data.leadHistory)) this.leadHistory = structuredClone(data.leadHistory).slice(0, 20);
           if (Array.isArray(data.leadChats)) this.leadChats = structuredClone(data.leadChats).slice(0, 20);
@@ -3053,6 +3117,10 @@
         },
 
         registerBuyer() {
+          if (Object.values(this.newBuyer).some((value) => this.containsBankingKeywords(value))) {
+            this.status = 'SUBMISSION BLOCKED: banking details are not allowed.';
+            return;
+          }
           this.buyers.push({
             id: this.newBuyerId(),
             entityName: this.newBuyer.entityName,
@@ -3078,10 +3146,60 @@
 
         advanceStage() {
           if (this.dealStage < this.pipelineStages.length - 1) {
+            if (this.pipelineStages[this.dealStage + 1] === 'NCND Signed') {
+              this.status = 'Drag the deal to NCND Signed to open the mandatory safety modal.';
+              return;
+            }
             this.dealStage++;
             this.refreshContracts();
             this.status = 'STAGE: ' + this.pipelineStages[this.dealStage].toUpperCase();
           }
+        },
+
+        startStageDrag(event) {
+          this.draggedDealStage = this.dealStage;
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', String(this.dealStage));
+        },
+
+        dropDealOnStage(targetIndex) {
+          const sourceStage = this.draggedDealStage;
+          this.draggedDealStage = null;
+          if (sourceStage !== this.dealStage || targetIndex === this.dealStage) return;
+
+          if (this.pipelineStages[targetIndex] === 'NCND Signed') {
+            this.pendingNCNDPreviousStage = sourceStage;
+            this.showNCNDModal = true;
+            return;
+          }
+
+          this.dealStage = targetIndex;
+          this.status = 'STAGE: ' + this.pipelineStages[targetIndex].toUpperCase();
+        },
+
+        cancelNCNDTransition() {
+          if (this.pendingNCNDPreviousStage !== null) {
+            this.dealStage = this.pendingNCNDPreviousStage;
+          }
+          this.showNCNDModal = false;
+          this.pendingNCNDPreviousStage = null;
+        },
+
+        confirmNCNDExternalCompletion() {
+          if (this.pendingNCNDPreviousStage === null
+            || this.pipelineStages[this.pendingNCNDPreviousStage] === 'NCND Signed') return;
+          this.dealStage = this.pipelineStages.indexOf('NCND Signed');
+          this.ncndExternalCompletionAt = new Date().toISOString();
+          console.info('NCND external completion confirmed at', this.ncndExternalCompletionAt);
+          this.status = 'STAGE: NCND SIGNED · EXTERNAL COMPLETION CONFIRMED';
+          this.showNCNDModal = false;
+          this.pendingNCNDPreviousStage = null;
+          this.refreshContracts();
+          this.saveToStorage();
+        },
+
+        containsBankingKeywords(value) {
+          return /\b(?:routing|account(?:\s+number)?|iban|swift(?:\s+code)?|bank(?:ing)?|wire)\b/i.test(String(value ?? ''));
         },
 
         regressStage() {
@@ -3503,7 +3621,7 @@
           sector: 'Multifamily',
           size: 18.4,
           partner: 'Jordan Davis',
-          stage: 'Sourcing',
+          stage: 'Sourced',
           status: 'New lead',
           statusTone: 'border-sky-700 bg-sky-900/30 text-sky-300',
           targetClose: 'Q1 2027',
@@ -3521,7 +3639,7 @@
           sector: 'Industrial',
           size: 32.0,
           partner: 'Avery Chen',
-          stage: 'Sourcing',
+          stage: 'Sourced',
           status: 'Outreach',
           statusTone: 'border-sky-700 bg-sky-900/30 text-sky-300',
           targetClose: 'Q2 2027',
@@ -3539,7 +3657,7 @@
           sector: 'Healthcare',
           size: 12.7,
           partner: 'Morgan Patel',
-          stage: 'Initial Review',
+          stage: 'Underwritten',
           status: 'Screening',
           statusTone: 'border-violet-700 bg-violet-900/30 text-violet-300',
           targetClose: 'Q1 2027',
@@ -3557,7 +3675,7 @@
           sector: 'Multifamily',
           size: 21.5,
           partner: 'Jordan Davis',
-          stage: 'Initial Review',
+          stage: 'Underwritten',
           status: 'Underwriting',
           statusTone: 'border-violet-700 bg-violet-900/30 text-violet-300',
           targetClose: 'Q2 2027',
@@ -3575,7 +3693,7 @@
           sector: 'Student Housing',
           size: 27.3,
           partner: 'Avery Chen',
-          stage: 'Due Diligence',
+          stage: 'Teaser Sent',
           status: 'In diligence',
           statusTone: 'border-amber-700 bg-amber-900/30 text-amber-300',
           targetClose: 'Dec 2026',
@@ -3593,7 +3711,7 @@
           sector: 'Office',
           size: 16.8,
           partner: 'Morgan Patel',
-          stage: 'Due Diligence',
+          stage: 'Teaser Sent',
           status: 'Site review',
           statusTone: 'border-amber-700 bg-amber-900/30 text-amber-300',
           targetClose: 'Jan 2027',
@@ -3611,7 +3729,7 @@
           sector: 'Self Storage',
           size: 9.6,
           partner: 'Jordan Davis',
-          stage: 'Term Sheet',
+          stage: 'NCND Signed',
           status: 'Negotiating',
           statusTone: 'border-orange-700 bg-orange-900/30 text-orange-300',
           targetClose: 'Nov 2026',
@@ -3629,7 +3747,7 @@
           sector: 'Industrial',
           size: 41.2,
           partner: 'Avery Chen',
-          stage: 'Term Sheet',
+          stage: 'NCND Signed',
           status: 'LOI submitted',
           statusTone: 'border-orange-700 bg-orange-900/30 text-orange-300',
           targetClose: 'Feb 2027',
@@ -3903,6 +4021,26 @@
       form.addEventListener('input', calculateValuation);
       form.addEventListener('submit', (event) => event.preventDefault());
       calculateValuation();
+
+      const bankingKeywords = /\b(?:routing|account(?:\s+number)?|iban|swift(?:\s+code)?|bank(?:ing)?|wire)\b/i;
+      document.querySelectorAll('form').forEach((submittedForm) => {
+        submittedForm.addEventListener('input', (event) => {
+          if (event.target && typeof event.target.setCustomValidity === 'function') {
+            event.target.setCustomValidity('');
+          }
+        });
+        submittedForm.addEventListener('submit', (event) => {
+          const unsafeField = Array.from(submittedForm.elements).find((field) =>
+            typeof field.value === 'string' && bankingKeywords.test(field.value)
+          );
+          if (!unsafeField) return;
+
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          unsafeField.setCustomValidity('Banking details are not accepted or stored by this application.');
+          unsafeField.reportValidity();
+        }, true);
+      });
     })();
   </script>
 </body>
