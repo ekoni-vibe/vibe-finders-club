@@ -245,7 +245,7 @@ const sampleDeals = [
     zipCode: "94102",
     profitMargin: 0.25,
     sellerName: "Alex Morgan",
-    sellerEmail: "alex.morgan@example.com"
+    sellerEmail: "user@example.com"
   }
 ];
 
@@ -283,7 +283,7 @@ async function executeDealPipeline() {
     // 4. Send Email Outreach via Resend
     await sendSellerOutreachEmail(offerPackage);
 
-    // 5. Stage Remittance Payment for Ebisa Wakjira (Ethiopia)
+    // 5. Stage Remittance Payment for Your Name (Ethiopia)
     const remittancePayload = stageRemittancePayment(deal, 0.02);
 
     executionLogs.push({
@@ -316,7 +316,7 @@ function startDevelopmentServer(port = Number(process.env.PORT) || 3000) {
   });
 
   server.listen(port, () => {
-    console.log(`DealRoom static development server listening on http://localhost:${port}`);
+    console.log(`Vibe Finders Club static development server listening on http://localhost:${port}`);
   });
   return server;
 }

@@ -1,6 +1,6 @@
 // remittance-generator.js
 /**
- * Remittance Staging Engine for Ebisa Wakjira (Ethiopia)
+ * Remittance Staging Engine for Your Name (Ethiopia)
  * Dispatches free Telegram Push Alerts for instant 1-click manual payment approval.
  */
 
@@ -38,7 +38,7 @@ async function sendTelegramAlert(messageText) {
 function stageRemittancePayment(deal, finderFeePercentage = 0.02) {
   const finderFeeUSD = Math.round(deal.purchasePrice * finderFeePercentage);
   const transactionId = `REM-${Date.now()}`;
-  const beneficiaryName = process.env.BENEFICIARY_NAME || "Ebisa Wakjira";
+  const beneficiaryName = process.env.BENEFICIARY_NAME || "Your Name";
   const beneficiaryCountry = process.env.BENEFICIARY_COUNTRY || "Ethiopia";
 
   const remittancePayload = {
@@ -72,7 +72,7 @@ function stageRemittancePayment(deal, finderFeePercentage = 0.02) {
   console.log(`======================================================\n`);
 
   // Dispatch Mobile Alert via Telegram
-  const alertText = `🚨 *DEALROOM REMITTANCE APPROVAL REQUIRED*
+  const alertText = `🚨 *VIBE FINDERS CLUB REMITTANCE APPROVAL REQUIRED*
 *Beneficiary:* ${beneficiaryName} (${beneficiaryCountry}) *Amount:* $${finderFeeUSD} USD
 *Property:* ${deal.address}
 *Transaction ID:* \`${transactionId}\`

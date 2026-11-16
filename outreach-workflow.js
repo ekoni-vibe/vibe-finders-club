@@ -117,7 +117,7 @@ OPTION 1: All-Cash Fast Close
 Please reply to this email to confirm which option fits your goals.
 
 Best regards,
-DealRoom Acquisitions Team
+Vibe Finders Club Acquisitions Team
   `;
 
   try {
@@ -128,8 +128,8 @@ DealRoom Acquisitions Team
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        from: process.env.SENDER_EMAIL || "onboarding@resend.dev",
-        to: offerPackage.sellerEmail || "seller@example.com",
+        from: process.env.SENDER_EMAIL || "user@example.com",
+        to: offerPackage.sellerEmail || "user@example.com",
         subject: `Purchase Offer for ${offerPackage.propertyAddress}`,
         text: emailBody
       })
@@ -168,7 +168,7 @@ async function sendTeaserEmail(deal) {
     `Cap Rate: ${formatCapRate(deal.capRate)}`,
     `Offer Type: ${offerType}`
   ].join('\n');
-  const to = deal.investorEmail || deal.to || 'investor@example.com';
+  const to = deal.investorEmail || deal.to || 'user@example.com';
   const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
   const apiKey = process.env.RESEND_API_KEY;
 
@@ -184,7 +184,7 @@ async function sendTeaserEmail(deal) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
+        from: process.env.SENDER_EMAIL || 'user@example.com',
         to,
         subject,
         text: emailBody

@@ -1,6 +1,6 @@
 // remittance-approval.js
 /**
- * Manual Approval Processor for Ebisa Wakjira Wire Remittances
+ * Manual Approval Processor for Your Name Wire Remittances
  */
 
 const fs = require('fs');
