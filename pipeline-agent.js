@@ -2,7 +2,7 @@ require('dotenv').config();
 
 // pipeline-agent.js
 /**
- * Unified DealRoom_New Execution Engine (100% Free Stack)
+ * Unified Vibe Finders Club Execution Engine (100% Free Stack)
  */
 
 const fs = require('fs');
@@ -251,7 +251,7 @@ const sampleDeals = [
 
 async function executeDealPipeline() {
   console.log("==================================================================");
-  console.log("Starting DealRoom_New Automated Real Estate Triage & Payout Engine");
+  console.log("Starting Vibe Finders Club Automated Real Estate Triage & Payout Engine");
   console.log("==================================================================\n");
 
   const executionLogs = [];
