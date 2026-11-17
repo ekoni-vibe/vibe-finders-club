@@ -137,6 +137,7 @@
       box-shadow: 0 0 0 1px #d97706;
     }
   </style>
+  <script src="./business-models.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-terminal text-slate-200 font-mono min-h-screen" x-data="dealRoomApp()">
@@ -197,6 +198,13 @@
           <div id="settings" class="flex items-center gap-2 scroll-mt-24">
             <button
               type="button"
+              @click="businessModelSettingsOpen = true"
+              class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-emerald-800 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 transition-colors min-h-[44px] md:text-sm"
+            >
+              Business Model
+            </button>
+            <button
+              type="button"
               @click="exportJson()"
               class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors min-h-[44px] md:text-sm"
             >
@@ -218,6 +226,55 @@
         </div>
       </div>
     </header>
+
+    <div
+      x-cloak
+      x-show="businessModelSettingsOpen"
+      x-transition.opacity
+      @click.self="businessModelSettingsOpen = false"
+      @keydown.escape.window="businessModelSettingsOpen = false"
+      class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/90 p-4 no-print"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="business-model-settings-title"
+    >
+      <section class="w-full max-w-xl border-2 border-emerald-700 bg-slate-900 p-5 shadow-2xl">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="business-model-settings-title" class="text-sm font-bold uppercase tracking-widest text-slate-100">Business Model</h2>
+            <p class="mt-2 text-xs leading-relaxed text-slate-400" x-text="businessModelConfig.description"></p>
+          </div>
+          <button
+            type="button"
+            @click="businessModelSettingsOpen = false"
+            class="grid h-10 w-10 shrink-0 place-items-center border border-slate-600 text-xl text-slate-300 hover:bg-slate-800"
+            aria-label="Close business model settings"
+          >&times;</button>
+        </div>
+        <label class="mt-5 block">
+          <span class="mb-2 block text-[10px] uppercase tracking-wider text-slate-400">Choose a workflow</span>
+          <select
+            :value="businessModelId"
+            @change="setBusinessModel($event.target.value)"
+            class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-3 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+          >
+            <template x-for="model in availableBusinessModels" :key="model.id">
+              <option :value="model.id" x-text="model.name"></option>
+            </template>
+          </select>
+        </label>
+        <p class="mt-4 border-l-2 border-amber-600 pl-3 text-[10px] leading-relaxed text-slate-400">
+          Workflow and underwriting estimates only. Commission and fee inputs are editable assumptions, not prescribed rates. Confirm licensing, referral-fee, disclosure, tax, and transaction requirements with qualified professionals in each applicable jurisdiction. Model selection does not determine legal eligibility.
+        </p>
+        <div class="mt-5 flex justify-end">
+          <button
+            type="button"
+            @click="businessModelSettingsOpen = false"
+            class="border-2 border-slate-600 bg-slate-800 px-4 py-2 text-xs uppercase tracking-wider text-slate-200 hover:bg-slate-700"
+          >Done</button>
+        </div>
+      </section>
+    </div>
 
   <!-- Main Grid -->
   <main class="max-w-7xl mx-auto p-4">
@@ -495,7 +552,7 @@
             />
           </label>
 
-          <label class="block">
+          <label class="block" x-show="businessModelId === 'finder' && deal.finderFeeType === 'flat'">
             <span class="text-xs uppercase text-slate-500 block mb-1">Referral / Finder's Fee</span>
             <input
               type="number"
@@ -571,6 +628,76 @@
           </label>
         </div>
 
+        <section class="mt-3 border-2 border-emerald-900/70 bg-slate-900/80 p-3 space-y-3" aria-labelledby="model-underwriting-title">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 id="model-underwriting-title" class="text-xs font-bold uppercase tracking-widest text-emerald-300" x-text="businessModelConfig.name + ' underwriting'"></h3>
+            <span class="text-[10px] text-slate-500">Estimates are driven by the selected model.</span>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2" x-show="businessModelId === 'finder'">
+            <label class="block">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">Finder fee basis</span>
+              <select x-model="deal.finderFeeType" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100">
+                <option value="flat">Flat referral fee</option>
+                <option value="assignment-percent">Percent of assignment</option>
+              </select>
+            </label>
+            <label class="block" x-show="deal.finderFeeType === 'assignment-percent'">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">Assignment amount</span>
+              <input type="number" min="0" x-model.number="deal.assignmentAmount" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100" />
+            </label>
+            <label class="block" x-show="deal.finderFeeType === 'assignment-percent'">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">Finder percentage (%)</span>
+              <input type="number" min="0" max="100" step="0.1" x-model.number="deal.finderFeePercent" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100" />
+            </label>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2" x-show="businessModelId === 'wholesaler'">
+            <label class="block">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">End buyer price</span>
+              <input type="number" min="0" x-model.number="deal.assignmentBuyerPrice" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100" />
+            </label>
+            <p class="self-end text-[10px] leading-relaxed text-slate-500">Assignment fee is estimated as end-buyer price minus contract price, floored at zero.</p>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3" x-show="businessModelId === 'agent'">
+            <label class="block">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">Sale price</span>
+              <input type="number" min="0" x-model.number="deal.salePrice" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100" />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">Commission rate (%)</span>
+              <input type="number" min="0" max="100" step="0.1" x-model.number="deal.commissionRatePercent" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100" />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">Agent split (%)</span>
+              <input type="number" min="0" max="100" step="0.1" x-model.number="deal.agentSplitPercent" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100" />
+            </label>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2" x-show="businessModelId === 'international'">
+            <label class="block">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">Annual operating expenses</span>
+              <input type="number" min="0" x-model.number="deal.annualOperatingExpenses" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100" />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-[10px] uppercase tracking-wider text-slate-400">Property management fee (%)</span>
+              <input type="number" min="0" max="100" step="0.1" x-model.number="deal.propertyManagementPercent" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100" />
+            </label>
+            <p class="text-[10px] leading-relaxed text-slate-500 sm:col-span-2">Debt service is treated as an annual amount; monthly rent is annualized for returns.</p>
+          </div>
+          <p
+            x-show="businessModelCalculation.error"
+            role="alert"
+            class="border border-red-800 bg-red-950/40 px-3 py-2 text-xs text-red-300"
+            x-text="'Invalid underwriting input: ' + businessModelCalculation.error"
+          ></p>
+          <dl class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <template x-for="metric in businessModelMetrics" :key="metric.label">
+              <div class="flex items-center justify-between gap-3 border border-slate-700 bg-slate-800/60 px-3 py-2">
+                <dt class="text-[10px] uppercase tracking-wider text-slate-400" x-text="metric.label"></dt>
+                <dd class="text-xs font-bold text-slate-100" x-text="formatBusinessModelValue(metric)"></dd>
+              </div>
+            </template>
+          </dl>
+        </section>
+
         <!-- Secondary signals + leverage -->
         <div class="border-2 border-slate-700 bg-slate-800 p-3 space-y-2 text-xs">
           <h3 class="text-xs uppercase tracking-widest text-slate-500">// Secondary Signals</h3>
@@ -599,16 +726,16 @@
         </div>
 
         <!-- Metric Display Grid -->
-        <div class="border-t-2 border-slate-700 pt-4">
+        <div x-show="businessModelId !== 'agent' && !businessModelCalculation.error" class="border-t-2 border-slate-700 pt-4">
           <h3 class="text-xs uppercase tracking-widest text-slate-500 mb-3">// Computed Metrics</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
 
-            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+            <div x-show="businessModelId === 'finder' || businessModelId === 'wholesaler'" class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
               <span class="text-slate-500 uppercase">MAO</span>
               <span class="text-slate-200" x-text="formatCurrency(mao)"></span>
             </div>
 
-            <div class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
+            <div x-show="businessModelId === 'finder' || businessModelId === 'wholesaler'" class="border-2 border-slate-700 bg-slate-800 px-3 py-2 flex justify-between items-center">
               <span class="text-slate-500 uppercase">Flip Spread</span>
               <span :class="flipSpread > 0 ? 'text-emerald-400' : 'text-slate-200'" x-text="formatCurrency(flipSpread)"></span>
             </div>
@@ -656,7 +783,7 @@
         </div>
 
         <!-- Phase 3B — Decision Matrix -->
-        <div class="border-t-2 border-slate-700 pt-4 space-y-3">
+        <div x-show="(businessModelId === 'finder' || businessModelId === 'wholesaler') && !businessModelCalculation.error" class="border-t-2 border-slate-700 pt-4 space-y-3">
           <h3 class="text-xs uppercase tracking-widest text-slate-500">// Decision Matrix</h3>
 
           <div
@@ -1030,44 +1157,7 @@
           </div>
           <span class="border border-slate-700 bg-slate-800 px-2 py-1 text-[10px] uppercase tracking-wider text-slate-400">Sample deals</span>
         </div>
-        <div class="flex gap-3 overflow-x-auto pb-3" aria-label="Deal pipeline stages">
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-sourced">
-            <h4 id="stage-sourced" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Sourced <span class="text-[10px] font-normal text-slate-500" data-stage-count="Sourced"></span>
-            </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Sourced"></div>
-          </section>
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-underwritten">
-            <h4 id="stage-underwritten" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Underwritten <span class="text-[10px] font-normal text-slate-500" data-stage-count="Underwritten"></span>
-            </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Underwritten"></div>
-          </section>
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-teaser-sent">
-            <h4 id="stage-teaser-sent" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Teaser Sent <span class="text-[10px] font-normal text-slate-500" data-stage-count="Teaser Sent"></span>
-            </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Teaser Sent"></div>
-          </section>
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-ncnd-signed">
-            <h4 id="stage-ncnd-signed" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              NCND Signed <span class="text-[10px] font-normal text-slate-500" data-stage-count="NCND Signed"></span>
-            </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="NCND Signed"></div>
-          </section>
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-under-contract">
-            <h4 id="stage-under-contract" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Under Contract <span class="text-[10px] font-normal text-slate-500" data-stage-count="Under Contract"></span>
-            </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Under Contract"></div>
-          </section>
-          <section class="w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50" aria-labelledby="stage-closed">
-            <h4 id="stage-closed" class="flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300">
-              Closed <span class="text-[10px] font-normal text-slate-500" data-stage-count="Closed"></span>
-            </h4>
-            <div class="min-h-24 space-y-2 p-2" data-pipeline-stage="Closed"></div>
-          </section>
-        </div>
+        <div class="flex gap-3 overflow-x-auto pb-3" aria-label="Deal pipeline stages" data-business-model-pipeline></div>
       </div>
 
       <div id="deal-detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="deal-modal-title" aria-describedby="deal-modal-summary">
@@ -1844,8 +1934,17 @@
           fee: 5000,
           monthlyRent: 0,
           annualTaxes: 0,
+          annualOperatingExpenses: 0,
           debtService: 0,
           cashInvested: 0,
+          finderFeeType: 'flat',
+          assignmentAmount: 0,
+          finderFeePercent: 10,
+          assignmentBuyerPrice: 0,
+          salePrice: 0,
+          commissionRatePercent: 3,
+          agentSplitPercent: 80,
+          propertyManagementPercent: 10,
           propertyType: '',
           sellerCounter: { counterPrice: 0, originalList: 0, closingCredits: 0, sellerFinancing: null, concessions: [], parsedAt: null },
         },
@@ -1885,14 +1984,8 @@
         broadcastCopied: false,
         copiedInvestorEmail: '',
 
-        pipelineStages: [
-          'Sourced',
-          'Underwritten',
-          'Teaser Sent',
-          'NCND Signed',
-          'Under Contract',
-          'Closed',
-        ],
+        businessModelId: 'finder',
+        businessModelSettingsOpen: false,
         dealStage: 0,
         draggedDealStage: null,
         pendingNCNDPreviousStage: null,
@@ -1942,6 +2035,7 @@
           this.clampReferralFee();
           this.rebuildBuyersZipIndex();
           this.invalidateMatchCache();
+          this.notifyBusinessModelChange();
 
           // Phase 1: no deep $watch('deal') — fee clamp via @input only.
           // Phase 2: invalidate CRM match cache when deal ZIP or price changes.
@@ -1967,6 +2061,96 @@
             this._matchWatchReady = true;
             this.refreshContracts();
           });
+        },
+
+        get availableBusinessModels() {
+          return Object.values(window.VibeBusinessModels.models);
+        },
+
+        get businessModelConfig() {
+          return window.VibeBusinessModels.getModel(this.businessModelId);
+        },
+
+        get pipelineStages() {
+          return this.businessModelConfig.stages;
+        },
+
+        get businessModelCalculation() {
+          try {
+            return {
+              result: window.VibeBusinessModels.calculateUnderwriting(this.businessModelId, this.deal),
+              error: '',
+            };
+          } catch (error) {
+            if (!(error instanceof RangeError)) throw error;
+            return { result: null, error: error.message };
+          }
+        },
+
+        get businessModelMetrics() {
+          const { result } = this.businessModelCalculation;
+          if (!result) return [];
+          const currency = (value) => ({ value, type: 'currency' });
+          const percent = (value) => ({ value, type: 'percent' });
+          switch (this.businessModelId) {
+            case 'finder':
+              return [
+                { label: 'Fee structure', value: result.feeType === 'flat' ? 'Flat fee' : `${result.feePercent}% of assignment`, type: 'text' },
+                { label: 'Assignment amount', ...currency(result.assignmentAmount) },
+                { label: "Finder's fee", ...currency(result.referralFee) },
+              ];
+            case 'wholesaler':
+              return [
+                { label: '70% ARV maximum offer', ...currency(result.maximumAllowableOffer) },
+                { label: 'Contract price', ...currency(result.contractPrice) },
+                { label: 'Estimated assignment fee', ...currency(result.assignmentFee) },
+              ];
+            case 'agent':
+              return [
+                { label: 'Gross commission', ...currency(result.grossCommission) },
+                { label: `Agent share (${result.agentSplitPercent}%)`, ...currency(result.agentCommission) },
+                { label: 'Brokerage share', ...currency(result.brokerageCommission) },
+              ];
+            case 'international':
+              return [
+                { label: `Management fee (${result.propertyManagementPercent}%)`, ...currency(result.estimatedManagementFees) },
+                { label: 'Net operating income', ...currency(result.noi) },
+                { label: 'Cap rate', ...percent(result.capRate) },
+                { label: 'Annual cash flow', ...currency(result.annualCashFlow) },
+                { label: 'Cash-on-cash return', ...percent(result.cashOnCash) },
+              ];
+            default:
+              throw new RangeError(`Unknown business model: ${this.businessModelId}`);
+          }
+        },
+
+        formatBusinessModelValue(metric) {
+          if (metric.type === 'text') return metric.value;
+          if (metric.value === null) return 'Enter required inputs';
+          return metric.type === 'percent' ? this.formatPct(metric.value) : this.formatCurrency(metric.value);
+        },
+
+        notifyBusinessModelChange() {
+          window.dispatchEvent(new CustomEvent('vfc-business-model-change', {
+            detail: this.businessModelId,
+          }));
+        },
+
+        setBusinessModel(modelId) {
+          if (!window.VibeBusinessModels.hasModel(modelId)) {
+            throw new RangeError(`Unknown business model: ${modelId}`);
+          }
+          if (this.businessModelId === modelId) return;
+
+          this.businessModelId = modelId;
+          this.dealStage = 0;
+          this.ncndExternalCompletionAt = null;
+          this.pendingNCNDPreviousStage = null;
+          this.showNCNDModal = false;
+          this.refreshContracts();
+          this.saveToStorage();
+          this.status = `BUSINESS MODEL: ${this.businessModelConfig.name}`;
+          this.notifyBusinessModelChange();
         },
 
         newBuyerId() {
@@ -2192,10 +2376,8 @@
               propertyType: this.deal.propertyType || 'SFR',
             };
             const metricsSnapshot = {
-              noi: (dealSnapshot.monthlyRent * 12) - dealSnapshot.annualTaxes,
-              capRate: listPrice
-                ? (((dealSnapshot.monthlyRent * 12) - dealSnapshot.annualTaxes) / listPrice) * 100
-                : 0,
+              noi: this.noi,
+              capRate: this.capRate,
               cashOnCash: this.cashOnCash,
               dscr: this.dscr,
               mao: this.mao,
@@ -2246,6 +2428,7 @@
         getStateSnapshot() {
           return {
             schemaVersion: VIBE_FINDERS_CLUB_SCHEMA_VERSION,
+            businessModelId: this.businessModelId,
             deal: this.deal,
             targetZips: this.targetZips,
             activeZips: this.activeZips,
@@ -2263,6 +2446,16 @@
         },
 
         applyState(data) {
+          const hasSavedBusinessModel = data.businessModelId !== undefined;
+          if (hasSavedBusinessModel) {
+            if (!window.VibeBusinessModels.hasModel(data.businessModelId)) {
+              throw new RangeError(`Unknown business model: ${data.businessModelId}`);
+            }
+            this.businessModelId = data.businessModelId;
+          } else {
+            this.businessModelId = 'finder';
+            this.dealStage = 0;
+          }
           if (data.deal && typeof data.deal === 'object') {
             this.deal = {
               ...this.deal,
@@ -2273,10 +2466,19 @@
               fee: this.safeNumber(data.deal.fee) || 5000,
               monthlyRent: this.safeNumber(data.deal.monthlyRent),
               annualTaxes: this.safeNumber(data.deal.annualTaxes),
+              annualOperatingExpenses: this.safeNumber(data.deal.annualOperatingExpenses),
               debtService: this.safeNumber(data.deal.debtService),
               cashInvested: this.safeNumber(data.deal.cashInvested),
+              assignmentAmount: this.safeNumber(data.deal.assignmentAmount),
+              finderFeePercent: data.deal.finderFeePercent === undefined ? 10 : this.safeNumber(data.deal.finderFeePercent),
+              assignmentBuyerPrice: this.safeNumber(data.deal.assignmentBuyerPrice),
+              salePrice: this.safeNumber(data.deal.salePrice),
+              commissionRatePercent: data.deal.commissionRatePercent === undefined ? 3 : this.safeNumber(data.deal.commissionRatePercent),
+              agentSplitPercent: data.deal.agentSplitPercent === undefined ? 80 : this.safeNumber(data.deal.agentSplitPercent),
+              propertyManagementPercent: data.deal.propertyManagementPercent === undefined ? 10 : this.safeNumber(data.deal.propertyManagementPercent),
               sellerCounter: data.deal.sellerCounter || data.sellerCounter || { counterPrice: 0, originalList: 0, closingCredits: 0, sellerFinancing: null, concessions: [], parsedAt: null },
             };
+            window.VibeBusinessModels.calculateUnderwriting(this.businessModelId, this.deal);
           }
           if (Array.isArray(data.targetZips)) this.targetZips = structuredClone(data.targetZips);
           if (Array.isArray(data.activeZips)) this.activeZips = structuredClone(data.activeZips).map(String);
@@ -2292,7 +2494,10 @@
             this.rebuildBuyersZipIndex();
             this.invalidateMatchCache();
           }
-          if (data.dealStage !== undefined) this.dealStage = data.dealStage;
+          if (data.dealStage !== undefined && hasSavedBusinessModel) {
+            const stage = Number(data.dealStage);
+            this.dealStage = Number.isInteger(stage) && stage >= 0 && stage < this.pipelineStages.length ? stage : 0;
+          }
           if (data.ncndExternalCompletionAt !== undefined) this.ncndExternalCompletionAt = data.ncndExternalCompletionAt;
           if (data.rawIngestionText !== undefined) this.rawIngestionText = data.rawIngestionText;
           if (Array.isArray(data.leadHistory)) this.leadHistory = structuredClone(data.leadHistory).slice(0, 20);
@@ -2306,6 +2511,7 @@
           }
           this.clampReferralFee();
           this.refreshContracts();
+          this.notifyBusinessModelChange();
         },
 
         saveToStorage() {
@@ -3273,11 +3479,15 @@
         },
 
         get mao() {
-          // MAO = (ARV * 0.70) - Estimated Rehab - Referral / Finder's Fee
-          const arv = this.safeNumber(this.deal.arv);
-          const rehab = this.safeNumber(this.deal.rehab);
-          const referralFee = this.safeNumber(this.deal.fee) || 5000;
-          return (arv * 0.70) - rehab - referralFee;
+          const result = this.businessModelCalculation.result;
+          if (!result) return 0;
+          if (this.businessModelId === 'wholesaler') return result.maximumAllowableOffer;
+          if (this.businessModelId === 'finder') {
+            return (this.safeNumber(this.deal.arv) * 0.70)
+              - this.safeNumber(this.deal.rehab)
+              - result.referralFee;
+          }
+          return 0;
         },
 
         get maxOffer() {
@@ -3417,10 +3627,16 @@
         },
 
         get noi() {
+          if (this.businessModelId === 'international') {
+            return this.businessModelCalculation.result?.noi ?? 0;
+          }
           return (this.safeNumber(this.deal.monthlyRent) * 12) - this.safeNumber(this.deal.annualTaxes);
         },
 
         get capRate() {
+          if (this.businessModelId === 'international') {
+            return this.businessModelCalculation.result?.capRate ?? 0;
+          }
           const listPrice = this.safeNumber(this.deal.listPrice);
           if (!listPrice) return 0;
           const rate = (this.noi / listPrice) * 100;
@@ -3435,6 +3651,9 @@
         },
 
         get cashOnCash() {
+          if (this.businessModelId === 'international') {
+            return this.businessModelCalculation.result?.cashOnCash ?? 0;
+          }
           const cashInvested = this.safeNumber(this.deal.cashInvested);
           if (!cashInvested) return 0;
           const rate = ((this.noi - this.safeNumber(this.deal.debtService)) / cashInvested) * 100;
@@ -3805,36 +4024,81 @@
         return element;
       };
 
-      deals.forEach((deal, index) => {
-        const column = document.querySelector('[data-pipeline-stage="' + deal.stage + '"]');
-        if (!column) return;
+      const pipelineContainer = document.querySelector('[data-business-model-pipeline]');
+      const legacyStageOrder = ['Sourced', 'Underwritten', 'Teaser Sent', 'NCND Signed', 'Under Contract', 'Closed'];
+      const modelStageForDeal = (deal, stages) => {
+        const progress = Math.max(0, legacyStageOrder.indexOf(deal.stage));
+        const stageIndex = Math.round((progress / (legacyStageOrder.length - 1)) * (stages.length - 1));
+        return stages[stageIndex];
+      };
 
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.dataset.dealIndex = String(index);
-        card.className = 'block w-full border border-slate-700 bg-slate-900 p-3 text-left transition-colors hover:border-emerald-700 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500';
-        card.setAttribute('aria-haspopup', 'dialog');
-        card.setAttribute('aria-label', 'View deal: ' + deal.name);
-        card.append(
-          createTextElement('span', 'block text-xs font-bold text-slate-100', deal.name),
-          createTextElement('span', 'mt-2 block text-[10px] text-slate-400', deal.sector),
-          createTextElement('span', 'mt-1 block text-sm font-bold text-slate-200', '$' + deal.size.toFixed(1) + 'M'),
-        );
+      const renderPipeline = (modelId) => {
+        if (!pipelineContainer) return;
+        const model = window.VibeBusinessModels.getModel(modelId);
+        pipelineContainer.replaceChildren();
 
-        const footer = document.createElement('span');
-        footer.className = 'mt-3 flex items-center justify-between gap-2 border-t border-slate-800 pt-2';
-        footer.append(
-          createTextElement('span', 'min-w-0 truncate text-[10px] text-slate-500', deal.partner),
-          createTextElement('span', 'shrink-0 border px-1.5 py-1 text-[9px] uppercase tracking-wide ' + deal.statusTone, deal.status),
-        );
-        card.append(footer);
-        column.append(card);
-      });
+        model.stages.forEach((stage, index) => {
+          const section = document.createElement('section');
+          section.className = 'w-72 min-w-[18rem] border border-slate-700 bg-slate-800/50';
+          section.setAttribute('aria-labelledby', `business-stage-${index}`);
 
-      document.querySelectorAll('[data-stage-count]').forEach((count) => {
-        const stage = count.dataset.stageCount;
-        const stageDeals = deals.filter((deal) => deal.stage === stage).length;
-        count.textContent = stageDeals + (stageDeals === 1 ? ' deal' : ' deals');
+          const heading = createTextElement(
+            'h4',
+            'flex items-center justify-between border-b border-slate-700 px-3 py-3 text-xs font-bold uppercase tracking-wider text-slate-300',
+            '',
+          );
+          heading.id = `business-stage-${index}`;
+          heading.append(
+            document.createTextNode(stage),
+            createTextElement('span', 'text-[10px] font-normal text-slate-500', ''),
+          );
+          heading.lastElementChild.dataset.stageCount = stage;
+
+          const column = document.createElement('div');
+          column.className = 'min-h-24 space-y-2 p-2';
+          column.dataset.pipelineStage = stage;
+          section.append(heading, column);
+          pipelineContainer.append(section);
+        });
+
+        deals.forEach((deal, index) => {
+          const stage = modelStageForDeal(deal, model.stages);
+          const column = Array.from(pipelineContainer.querySelectorAll('[data-pipeline-stage]'))
+            .find((element) => element.dataset.pipelineStage === stage);
+          if (!column) return;
+
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.dataset.dealIndex = String(index);
+          card.dataset.stage = stage;
+          card.className = 'block w-full border border-slate-700 bg-slate-900 p-3 text-left transition-colors hover:border-emerald-700 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500';
+          card.setAttribute('aria-haspopup', 'dialog');
+          card.setAttribute('aria-label', 'View deal: ' + deal.name);
+          card.append(
+            createTextElement('span', 'block text-xs font-bold text-slate-100', deal.name),
+            createTextElement('span', 'mt-2 block text-[10px] text-slate-400', deal.sector),
+            createTextElement('span', 'mt-1 block text-sm font-bold text-slate-200', '$' + deal.size.toFixed(1) + 'M'),
+          );
+
+          const footer = document.createElement('span');
+          footer.className = 'mt-3 flex items-center justify-between gap-2 border-t border-slate-800 pt-2';
+          footer.append(
+            createTextElement('span', 'min-w-0 truncate text-[10px] text-slate-500', deal.partner),
+            createTextElement('span', 'shrink-0 border px-1.5 py-1 text-[9px] uppercase tracking-wide ' + deal.statusTone, deal.status),
+          );
+          card.append(footer);
+          column.append(card);
+        });
+
+        pipelineContainer.querySelectorAll('[data-stage-count]').forEach((count) => {
+          const stageDeals = deals.filter((deal) => modelStageForDeal(deal, model.stages) === count.dataset.stageCount).length;
+          count.textContent = stageDeals + (stageDeals === 1 ? ' deal' : ' deals');
+        });
+      };
+
+      renderPipeline('finder');
+      window.addEventListener('vfc-business-model-change', (event) => {
+        if (window.VibeBusinessModels.hasModel(event.detail)) renderPipeline(event.detail);
       });
 
       const modal = document.getElementById('deal-detail-modal');
@@ -3854,10 +4118,10 @@
         if (lastFocusedCard) lastFocusedCard.focus();
       };
 
-      const openModal = (deal, card) => {
+      const openModal = (deal, card, stage) => {
         lastFocusedCard = card;
         previousBodyOverflow = document.body.style.overflow;
-        setText('deal-modal-stage', deal.stage + ' · ' + deal.status);
+        setText('deal-modal-stage', stage + ' · ' + deal.status);
         setText('deal-modal-title', deal.name);
         setText('deal-modal-summary', deal.summary);
         setText('deal-modal-sector', deal.sector);
@@ -3904,11 +4168,11 @@
         closeButton.focus();
       };
 
-      document.querySelectorAll('[data-pipeline-stage] [data-deal-index]').forEach((card) => {
-        card.addEventListener('click', () => {
-          const deal = deals[Number(card.dataset.dealIndex)];
-          if (deal) openModal(deal, card);
-        });
+      pipelineContainer.addEventListener('click', (event) => {
+        const card = event.target.closest('[data-deal-index]');
+        if (!card || !pipelineContainer.contains(card)) return;
+        const deal = deals[Number(card.dataset.dealIndex)];
+        if (deal) openModal(deal, card, card.dataset.stage);
       });
 
       closeButton.addEventListener('click', closeModal);
