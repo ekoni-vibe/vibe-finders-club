@@ -2,6 +2,7 @@
   "name": "vibe-finders-club",
   "version": "1.0.0",
   "description": "Automated real estate deal sourcing and underwriting",
+  "license": "AGPL-3.0-only OR LicenseRef-Commercial",
   "main": "pipeline-agent.js",
   "scripts": {
     "dev": "node pipeline-agent.js --dev",
