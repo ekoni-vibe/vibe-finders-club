@@ -10,7 +10,7 @@
     "webhook": "node scripts/make-com-webhook.js",
     "sync": "node scripts/supabase-sync.js",
     "test": "node scripts/final-security-check.js",
-    "build": "echo 'Static build' && mkdir dist && copy index.html dist\\",
+    "build": "echo 'Static build' && mkdir dist && copy index.html dist\\ && copy business-models.js dist\\ && copy commercial-checkout.example.js dist\\ && copy payout-config.example.json dist\\",
     "preview": "npx serve dist",
     "start": "node pipeline-agent.js"
   },

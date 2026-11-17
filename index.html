@@ -138,6 +138,7 @@
     }
   </style>
   <script src="./business-models.js"></script>
+  <script src="./commercial-checkout.example.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-terminal text-slate-200 font-mono min-h-screen" x-data="dealRoomApp()">
@@ -202,6 +203,13 @@
               class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-emerald-800 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 transition-colors min-h-[44px] md:text-sm"
             >
               Business Model
+            </button>
+            <button
+              type="button"
+              @click="commercialCheckoutOpen = true"
+              class="px-3 py-1.5 text-xs uppercase tracking-wider border-2 border-amber-800 bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 transition-colors min-h-[44px] md:text-sm"
+            >
+              Upgrade to Pro
             </button>
             <button
               type="button"
@@ -270,6 +278,88 @@
           <button
             type="button"
             @click="businessModelSettingsOpen = false"
+            class="border-2 border-slate-600 bg-slate-800 px-4 py-2 text-xs uppercase tracking-wider text-slate-200 hover:bg-slate-700"
+          >Done</button>
+        </div>
+      </section>
+    </div>
+
+    <div
+      x-cloak
+      x-show="commercialCheckoutOpen"
+      x-transition.opacity
+      @click.self="commercialCheckoutOpen = false"
+      @keydown.escape.window="commercialCheckoutOpen = false"
+      class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/90 p-4 no-print"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="commercial-checkout-title"
+    >
+      <section class="max-h-[90vh] w-full max-w-3xl overflow-y-auto border-2 border-amber-700 bg-slate-900 p-5 shadow-2xl">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="commercial-checkout-title" class="text-sm font-bold uppercase tracking-widest text-slate-100">Upgrade to Pro or Commercial</h2>
+            <p class="mt-2 text-xs leading-relaxed text-slate-400">Choose a hosted checkout or review the available transfer options.</p>
+          </div>
+          <button
+            type="button"
+            @click="commercialCheckoutOpen = false"
+            class="grid h-10 w-10 shrink-0 place-items-center border border-slate-600 text-xl text-slate-300 hover:bg-slate-800"
+            aria-label="Close commercial checkout"
+          >&times;</button>
+        </div>
+
+        <label class="mt-5 block max-w-xs">
+          <span class="mb-2 block text-[10px] uppercase tracking-wider text-slate-400">License tier</span>
+          <select x-model="commercialTier" class="w-full border-2 border-slate-700 bg-slate-800 px-3 py-3 text-sm text-slate-100">
+            <option value="Pro">Pro</option>
+            <option value="Commercial">Commercial</option>
+          </select>
+        </label>
+
+        <p
+          x-show="payoutConfigError"
+          role="alert"
+          class="mt-4 border border-red-800 bg-red-950/40 px-3 py-2 text-xs text-red-300"
+          x-text="'Payment configuration unavailable: ' + payoutConfigError"
+        ></p>
+        <p x-show="!payoutConfig && !payoutConfigError" class="mt-4 text-xs text-slate-400" role="status">Loading payment options…</p>
+
+        <div x-show="payoutConfig" class="mt-4 space-y-3">
+          <p
+            class="border-l-2 border-amber-600 pl-3 text-[10px] leading-relaxed text-slate-400"
+            x-text="payoutConfig && payoutConfig.USE_GLOBAL_CHECKOUT
+              ? 'Global checkout options are enabled. Availability depends on provider and jurisdiction.'
+              : 'Global checkout is disabled; only the manual fallback is shown.'"
+          ></p>
+          <template x-for="method in availablePaymentMethods" :key="method.id">
+            <article class="border border-slate-700 bg-slate-800/60 p-3">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 class="text-xs font-bold uppercase tracking-wider text-slate-100" x-text="method.name"></h3>
+                  <p class="mt-1 text-[10px] text-slate-500" x-text="method.availability"></p>
+                  <p class="mt-2 text-xs text-slate-300" x-text="method.description"></p>
+                  <pre x-show="method.instructions" class="mt-2 whitespace-pre-wrap break-words text-[10px] text-slate-400" x-text="method.instructions"></pre>
+                </div>
+                <button
+                  x-show="method.kind === 'checkout'"
+                  type="button"
+                  @click="startCommercialCheckout(method.id)"
+                  class="shrink-0 border-2 border-amber-700 bg-amber-950/50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-amber-300 hover:bg-amber-900/50"
+                >Continue to checkout</button>
+              </div>
+            </article>
+          </template>
+        </div>
+
+        <p x-show="commercialCheckoutStatus" role="status" aria-live="polite" class="mt-4 border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-300" x-text="commercialCheckoutStatus"></p>
+        <p class="mt-4 text-[10px] leading-relaxed text-slate-500">
+          Example configuration only. Replace every placeholder before enabling payments. Manual banking or wallet details should be verified and shared through an appropriate secure channel. No regional eligibility is inferred automatically.
+        </p>
+        <div class="mt-5 flex justify-end">
+          <button
+            type="button"
+            @click="commercialCheckoutOpen = false"
             class="border-2 border-slate-600 bg-slate-800 px-4 py-2 text-xs uppercase tracking-wider text-slate-200 hover:bg-slate-700"
           >Done</button>
         </div>
@@ -1986,6 +2076,11 @@
 
         businessModelId: 'finder',
         businessModelSettingsOpen: false,
+        commercialCheckoutOpen: false,
+        commercialTier: 'Pro',
+        commercialCheckoutStatus: '',
+        payoutConfig: null,
+        payoutConfigError: '',
         dealStage: 0,
         draggedDealStage: null,
         pendingNCNDPreviousStage: null,
@@ -2036,6 +2131,7 @@
           this.rebuildBuyersZipIndex();
           this.invalidateMatchCache();
           this.notifyBusinessModelChange();
+          this.loadPayoutConfig();
 
           // Phase 1: no deep $watch('deal') — fee clamp via @input only.
           // Phase 2: invalidate CRM match cache when deal ZIP or price changes.
@@ -2065,6 +2161,49 @@
 
         get availableBusinessModels() {
           return Object.values(window.VibeBusinessModels.models);
+        },
+
+        get availablePaymentMethods() {
+          if (!this.payoutConfig) return [];
+          return window.VibeCommercialCheckout.getAvailablePaymentMethods(this.payoutConfig);
+        },
+
+        async loadPayoutConfig() {
+          try {
+            const response = await fetch('./payout-config.example.json', { cache: 'no-store' });
+            if (!response.ok) {
+              throw new Error(`Payment config request failed with status ${response.status}.`);
+            }
+            const config = await response.json();
+            window.VibeCommercialCheckout.getAvailablePaymentMethods(config);
+            this.payoutConfig = config;
+            this.payoutConfigError = '';
+          } catch (error) {
+            console.error('Unable to load payment configuration.', error);
+            this.payoutConfig = null;
+            this.payoutConfigError = error instanceof Error ? error.message : String(error);
+          }
+        },
+
+        startCommercialCheckout(methodId) {
+          if (!this.payoutConfig) {
+            this.commercialCheckoutStatus = 'Payment configuration is not available.';
+            return;
+          }
+
+          try {
+            const result = window.VibeCommercialCheckout.initiateCommercialLicenseCheckout(
+              this.commercialTier,
+              methodId,
+              this.payoutConfig,
+            );
+            this.commercialCheckoutStatus = result.status === 'placeholder'
+              ? `Configure a real HTTPS checkout URL for ${methodId} before accepting payments.`
+              : `Opening ${methodId} checkout for the ${this.commercialTier} tier.`;
+          } catch (error) {
+            console.error('Commercial checkout could not be started.', error);
+            this.commercialCheckoutStatus = `Checkout could not start: ${error instanceof Error ? error.message : String(error)}`;
+          }
         },
 
         get businessModelConfig() {

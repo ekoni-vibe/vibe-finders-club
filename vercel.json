@@ -2,6 +2,9 @@
   "version": 2,
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
+    { "src": "business-models.js", "use": "@vercel/static" },
+    { "src": "commercial-checkout.example.js", "use": "@vercel/static" },
+    { "src": "payout-config.example.json", "use": "@vercel/static" },
     { "src": "api/webhook.js", "use": "@vercel/node" }
   ],
   "routes": [

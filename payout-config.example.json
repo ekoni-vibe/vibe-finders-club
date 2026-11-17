@@ -1,0 +1,56 @@
+{
+  "USE_GLOBAL_CHECKOUT": true,
+  "paymentMethods": [
+    {
+      "id": "stripe",
+      "name": "Stripe Payment Link",
+      "kind": "checkout",
+      "enabled": true,
+      "availability": "US/EU users with an eligible Stripe account",
+      "description": "Hosted checkout for Pro or Commercial licenses.",
+      "checkoutUrls": {
+        "Pro": "[YOUR_STRIPE_PRO_PAYMENT_LINK_URL]",
+        "Commercial": "[YOUR_STRIPE_COMMERCIAL_PAYMENT_LINK_URL]"
+      }
+    },
+    {
+      "id": "merchant-of-record",
+      "name": "Lemon Squeezy / Paddle",
+      "kind": "checkout",
+      "enabled": true,
+      "availability": "Global SaaS-style checkout where supported",
+      "description": "Merchant-of-record checkout; configure a provider URL for each tier.",
+      "checkoutUrls": {
+        "Pro": "[YOUR_MOR_PRO_CHECKOUT_URL]",
+        "Commercial": "[YOUR_MOR_COMMERCIAL_CHECKOUT_URL]"
+      }
+    },
+    {
+      "id": "wise",
+      "name": "Wise",
+      "kind": "instructions",
+      "enabled": true,
+      "availability": "International bank transfer where available",
+      "description": "Low-fee international transfer instructions.",
+      "instructions": "[YOUR_WISE_PAYMENT_INSTRUCTIONS]"
+    },
+    {
+      "id": "cryptocurrency",
+      "name": "Cryptocurrency",
+      "kind": "instructions",
+      "enabled": true,
+      "availability": "USDT TRC20 / BTC",
+      "description": "Use only a wallet address and network confirmed by the recipient.",
+      "instructions": "USDT (TRC20): [YOUR_USDT_TRC20_ADDRESS]\nBTC: [YOUR_BTC_ADDRESS]"
+    },
+    {
+      "id": "manual-swift-iban",
+      "name": "Manual SWIFT/IBAN",
+      "kind": "instructions",
+      "enabled": true,
+      "availability": "Fallback for restricted regions",
+      "description": "Manual bank transfer details, shared outside this application.",
+      "instructions": "Beneficiary: [YOUR_BENEFICIARY_NAME]\nBank: [YOUR_BANK_NAME]\nSWIFT/BIC: [YOUR_SWIFT_BIC]\nIBAN: [YOUR_IBAN]"
+    }
+  ]
+}
