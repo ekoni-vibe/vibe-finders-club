@@ -33,7 +33,11 @@
       throw new RangeError('An enabled Manual SWIFT/IBAN fallback is required.');
     }
 
-    if (!config.USE_GLOBAL_CHECKOUT) return [manualFallback];
+    if (!config.USE_GLOBAL_CHECKOUT) {
+      return config.paymentMethods.filter(
+        (method) => method.enabled === true && method.kind === 'instructions',
+      );
+    }
     return config.paymentMethods.filter((method) => method.enabled === true);
   }
 

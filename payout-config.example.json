@@ -44,6 +44,15 @@
       "instructions": "USDT (TRC20): [YOUR_USDT_TRC20_ADDRESS]\nBTC: [YOUR_BTC_ADDRESS]"
     },
     {
+      "id": "western-union",
+      "name": "Western Union",
+      "kind": "instructions",
+      "enabled": true,
+      "availability": "Manual transfer where supported",
+      "description": "Use the recipient-verified transfer instructions.",
+      "instructions": "[YOUR_WESTERN_UNION_PAYMENT_INSTRUCTIONS]"
+    },
+    {
       "id": "manual-swift-iban",
       "name": "Manual SWIFT/IBAN",
       "kind": "instructions",

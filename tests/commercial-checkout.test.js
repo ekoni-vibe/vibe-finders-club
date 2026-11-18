@@ -6,11 +6,11 @@ const checkout = require('../commercial-checkout.example');
 test('exposes global methods when enabled and the manual fallback when disabled', () => {
   assert.deepEqual(
     checkout.getAvailablePaymentMethods(config).map((method) => method.id),
-    ['stripe', 'merchant-of-record', 'wise', 'cryptocurrency', 'manual-swift-iban'],
+    ['stripe', 'merchant-of-record', 'wise', 'cryptocurrency', 'western-union', 'manual-swift-iban'],
   );
   assert.deepEqual(
     checkout.getAvailablePaymentMethods({ ...config, USE_GLOBAL_CHECKOUT: false }).map((method) => method.id),
-    ['manual-swift-iban'],
+    ['wise', 'cryptocurrency', 'western-union', 'manual-swift-iban'],
   );
 });
 
