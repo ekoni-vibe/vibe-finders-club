@@ -330,7 +330,7 @@
             class="border-l-2 border-amber-600 pl-3 text-[10px] leading-relaxed text-slate-400"
             x-text="payoutConfig && payoutConfig.USE_GLOBAL_CHECKOUT
               ? 'Global checkout options are enabled. Availability depends on provider and jurisdiction.'
-              : 'Global checkout is disabled; only the manual fallback is shown.'"
+              : 'Global checkout is disabled; transfer and support methods are shown.'"
           ></p>
           <template x-for="method in availablePaymentMethods" :key="method.id">
             <article class="border border-slate-700 bg-slate-800/60 p-3">

@@ -3,14 +3,33 @@ const assert = require('node:assert/strict');
 const config = require('../payout-config.example.json');
 const checkout = require('../commercial-checkout.example');
 
-test('exposes global methods when enabled and the manual fallback when disabled', () => {
+test('exposes global methods when enabled and transfer/support methods when disabled', () => {
   assert.deepEqual(
     checkout.getAvailablePaymentMethods(config).map((method) => method.id),
-    ['stripe', 'merchant-of-record', 'wise', 'cryptocurrency', 'western-union', 'manual-swift-iban'],
+    [
+      'stripe',
+      'merchant-of-record',
+      'wise',
+      'cryptocurrency',
+      'western-union',
+      'moneygram',
+      'manual-swift-iban',
+      'github-sponsors',
+      'ko-fi',
+    ],
   );
   assert.deepEqual(
     checkout.getAvailablePaymentMethods({ ...config, USE_GLOBAL_CHECKOUT: false }).map((method) => method.id),
-    ['wise', 'cryptocurrency', 'western-union', 'manual-swift-iban'],
+    ['wise', 'cryptocurrency', 'western-union', 'moneygram', 'manual-swift-iban', 'github-sponsors', 'ko-fi'],
+  );
+});
+
+test('continues to accept the legacy paymentMethods property', () => {
+  const { methods, ...legacyConfig } = config;
+
+  assert.deepEqual(
+    checkout.getAvailablePaymentMethods({ ...legacyConfig, paymentMethods: methods }).map((method) => method.id),
+    methods.map((method) => method.id),
   );
 });
 
@@ -36,7 +55,7 @@ test('prevents hosted checkout from being selected when global checkout is disab
 test('redirects a configured Pro or Commercial checkout to HTTPS', () => {
   const configured = {
     ...config,
-    paymentMethods: config.paymentMethods.map((method) => (
+    methods: config.methods.map((method) => (
       method.id === 'stripe'
         ? {
           ...method,
@@ -64,7 +83,7 @@ test('rejects invalid tiers, non-hosted methods, and insecure checkout URLs', ()
 
   const insecure = {
     ...config,
-    paymentMethods: config.paymentMethods.map((method) => (
+    methods: config.methods.map((method) => (
       method.id === 'stripe'
         ? {
           ...method,

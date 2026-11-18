@@ -1,6 +1,6 @@
 {
   "USE_GLOBAL_CHECKOUT": true,
-  "paymentMethods": [
+  "methods": [
     {
       "id": "stripe",
       "name": "Stripe Payment Link",
@@ -31,7 +31,7 @@
       "kind": "instructions",
       "enabled": true,
       "availability": "International bank transfer where available",
-      "description": "Low-fee international transfer instructions.",
+      "description": "International transfer instructions; availability and fees vary.",
       "instructions": "[YOUR_WISE_PAYMENT_INSTRUCTIONS]"
     },
     {
@@ -39,8 +39,8 @@
       "name": "Cryptocurrency",
       "kind": "instructions",
       "enabled": true,
-      "availability": "USDT TRC20 / BTC",
-      "description": "Use only a wallet address and network confirmed by the recipient.",
+      "availability": "USDT TRC20 / BTC, where lawful and supported",
+      "description": "Confirm the exact asset and network with the recipient before sending.",
       "instructions": "USDT (TRC20): [YOUR_USDT_TRC20_ADDRESS]\nBTC: [YOUR_BTC_ADDRESS]"
     },
     {
@@ -49,8 +49,17 @@
       "kind": "instructions",
       "enabled": true,
       "availability": "Manual transfer where supported",
-      "description": "Use the recipient-verified transfer instructions.",
-      "instructions": "[YOUR_WESTERN_UNION_PAYMENT_INSTRUCTIONS]"
+      "description": "Share recipient details privately and follow local transfer requirements.",
+      "instructions": "Receiver Name: [YOUR_LEGAL_NAME]\nCity: [YOUR_CITY]\nCountry: [YOUR_COUNTRY]"
+    },
+    {
+      "id": "moneygram",
+      "name": "MoneyGram",
+      "kind": "instructions",
+      "enabled": true,
+      "availability": "Manual transfer where supported",
+      "description": "Share recipient details privately and follow local transfer requirements.",
+      "instructions": "Receiver Name: [YOUR_LEGAL_NAME]\nCity: [YOUR_CITY]\nCountry: [YOUR_COUNTRY]"
     },
     {
       "id": "manual-swift-iban",
@@ -58,8 +67,26 @@
       "kind": "instructions",
       "enabled": true,
       "availability": "Fallback for restricted regions",
-      "description": "Manual bank transfer details, shared outside this application.",
+      "description": "Manual bank transfer details; share beneficiary information privately.",
       "instructions": "Beneficiary: [YOUR_BENEFICIARY_NAME]\nBank: [YOUR_BANK_NAME]\nSWIFT/BIC: [YOUR_SWIFT_BIC]\nIBAN: [YOUR_IBAN]"
+    },
+    {
+      "id": "github-sponsors",
+      "name": "GitHub Sponsors",
+      "kind": "support",
+      "enabled": true,
+      "availability": "Recurring or one-time community support where available",
+      "description": "Support ongoing open-source development.",
+      "instructions": "Support page: [YOUR_GITHUB_SPONSORS_URL]"
+    },
+    {
+      "id": "ko-fi",
+      "name": "Ko-fi",
+      "kind": "support",
+      "enabled": true,
+      "availability": "Community support where available",
+      "description": "Accept one-time tips or recurring memberships.",
+      "instructions": "Support page: [YOUR_KOFI_URL]"
     }
   ]
 }

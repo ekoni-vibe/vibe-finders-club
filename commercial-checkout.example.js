@@ -14,19 +14,20 @@
     if (typeof config.USE_GLOBAL_CHECKOUT !== 'boolean') {
       throw new TypeError('USE_GLOBAL_CHECKOUT must be a boolean.');
     }
-    if (!Array.isArray(config.paymentMethods)) {
-      throw new TypeError('Payout configuration must include a paymentMethods array.');
+    const methods = config.methods ?? config.paymentMethods;
+    if (!Array.isArray(methods)) {
+      throw new TypeError('Payout configuration must include a methods array.');
     }
 
     const ids = new Set();
-    for (const method of config.paymentMethods) {
+    for (const method of methods) {
       if (!method || typeof method.id !== 'string' || ids.has(method.id)) {
         throw new TypeError('Payment methods must have unique string IDs.');
       }
       ids.add(method.id);
     }
 
-    const manualFallback = config.paymentMethods.find(
+    const manualFallback = methods.find(
       (method) => method.id === 'manual-swift-iban' && method.enabled === true,
     );
     if (!manualFallback) {
@@ -34,11 +35,11 @@
     }
 
     if (!config.USE_GLOBAL_CHECKOUT) {
-      return config.paymentMethods.filter(
-        (method) => method.enabled === true && method.kind === 'instructions',
+      return methods.filter(
+        (method) => method.enabled === true && ['instructions', 'support'].includes(method.kind),
       );
     }
-    return config.paymentMethods.filter((method) => method.enabled === true);
+    return methods.filter((method) => method.enabled === true);
   }
 
   function initiateCommercialLicenseCheckout(tier, methodId, config, options = {}) {

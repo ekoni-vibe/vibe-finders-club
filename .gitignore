@@ -1,11 +1,16 @@
 .env
 .env.*
+.env.local
 !.env.example
 node_modules/
 dist/
 coverage/
 *.log
 .triage-ai-cache.json
+triage-execution-log.json
+pending-remittances.json
+extracted-listings.json
+payout-config.json
 .DS_Store
 Thumbs.db
 
