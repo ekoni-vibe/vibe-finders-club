@@ -15,3 +15,13 @@ payout-config.json
 Thumbs.db
 
 .vercel
+
+executed-remittances.json
+
+pending-remittances.json
+
+triage-ai-cache.json
+
+triage-execution-log.json
+
+extracted-listings.json
