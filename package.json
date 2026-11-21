@@ -2,7 +2,7 @@
   "name": "vibe-finders-club",
   "version": "1.0.0",
   "description": "Automated real estate deal sourcing and underwriting",
-  "license": "AGPL-3.0-only OR LicenseRef-Commercial",
+  "license": "AGPL-3.0-only",
   "main": "pipeline-agent.js",
   "scripts": {
     "dev": "node pipeline-agent.js --dev",
@@ -10,8 +10,8 @@
     "audit": "node scripts/audit-config.js",
     "webhook": "node scripts/make-com-webhook.js",
     "sync": "node scripts/supabase-sync.js",
-    "test": "node scripts/final-security-check.js",
-    "build": "echo 'Static build' && mkdir dist && copy index.html dist\\ && copy business-models.js dist\\ && copy commercial-checkout.example.js dist\\ && copy payout-config.example.json dist\\",
+    "test": "node --test",
+    "build": "echo 'Static build' && mkdir dist && copy index.html dist\\ && copy business-models.js dist\\",
     "preview": "npx serve dist",
     "start": "node pipeline-agent.js"
   },

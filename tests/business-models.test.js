@@ -33,7 +33,7 @@ test('exposes all four models and their distinct pipelines', () => {
     'Lead',
     'Underwriting',
     'LLC Acquisition',
-    'Property Management Handoff',
+    'PM Handoff',
     'Cash Flow',
   ]);
 });

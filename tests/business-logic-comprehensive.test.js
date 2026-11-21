@@ -1,12 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const businessModels = require('../business-models');
-const payoutConfig = require('../payout-config.example.json');
-const commercialCheckout = require('../commercial-checkout.example');
 
 const expectedModels = {
   finder: {
-    name: 'Finder / Bird Dog (Existing)',
+    name: 'Finder / Bird Dog',
     stages: ['Lead', 'NCND Signed', 'Verified', 'Referral Payout'],
   },
   wholesaler: {
@@ -18,8 +16,8 @@ const expectedModels = {
     stages: ['Lead', 'Pre-Listing', 'Active Listing', 'Under Contract', 'Closed'],
   },
   international: {
-    name: 'International Investor (Remote US LLC)',
-    stages: ['Lead', 'Underwriting', 'LLC Acquisition', 'Property Management Handoff', 'Cash Flow'],
+    name: 'International Investor',
+    stages: ['Lead', 'Underwriting', 'LLC Acquisition', 'PM Handoff', 'Cash Flow'],
   },
 };
 
@@ -39,7 +37,6 @@ test('all four business models have their expected names and pipeline stages', (
   }
   assert.equal(distinctPipelines.size, Object.keys(expectedModels).length);
 });
-
 test('wholesaler and international stages include required transaction milestones', () => {
   const wholesalerStages = businessModels.getModel('wholesaler').stages;
   const internationalStages = businessModels.getModel('international').stages;
@@ -47,7 +44,7 @@ test('wholesaler and international stages include required transaction milestone
   assert.ok(wholesalerStages.includes('Contract'));
   assert.ok(wholesalerStages.some((stage) => stage.includes('Assignment')));
   assert.ok(internationalStages.includes('LLC Acquisition'));
-  assert.ok(internationalStages.some((stage) => stage.includes('Property Management')));
+  assert.ok(internationalStages.includes('PM Handoff'));
 });
 
 test('Finder underwriting supports flat and assignment-percentage referral fees', () => {
@@ -112,23 +109,4 @@ test('international investor underwriting calculates management fees, cap rate, 
   assert.equal(result.capRate, 8.3);
   assert.equal(result.annualCashFlow, 10600);
   assert.equal(result.cashOnCash, 21.2);
-});
-
-test('global checkout includes all configured providers and disabled mode returns transfer and support methods', () => {
-  const globalMethods = commercialCheckout.getAvailablePaymentMethods(payoutConfig);
-  const globalMethodIds = globalMethods.map((method) => method.id);
-  const expectedGlobalIds = ['chapa', 'lemon-squeezy', 'telebirr-donation', 'western-union'];
-
-  assert.deepEqual(globalMethodIds, expectedGlobalIds);
-
-  const manualMethods = commercialCheckout.getAvailablePaymentMethods({
-    ...payoutConfig,
-    use_global_checkout: false,
-  });
-  assert.deepEqual(
-    manualMethods.map((method) => method.id),
-    ['western-union'],
-  );
-  assert.ok(manualMethods.every((method) => ['instructions', 'support'].includes(method.kind)));
-  assert.ok(manualMethods.every((method) => !['chapa', 'lemon-squeezy'].includes(method.id)));
 });

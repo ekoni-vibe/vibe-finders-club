@@ -8,7 +8,7 @@
   const models = {
     finder: {
       id: 'finder',
-      name: 'Finder / Bird Dog (Existing)',
+      name: 'Finder / Bird Dog',
       description: 'Introduction-only referrals with an NCND checkpoint and a flat or assignment-based referral fee.',
       stages: ['Lead', 'NCND Signed', 'Verified', 'Referral Payout'],
     },
@@ -26,9 +26,9 @@
     },
     international: {
       id: 'international',
-      name: 'International Investor (Remote US LLC)',
+      name: 'International Investor',
       description: 'Estimate rental returns, management fees, cap rate, and cash-on-cash return.',
-      stages: ['Lead', 'Underwriting', 'LLC Acquisition', 'Property Management Handoff', 'Cash Flow'],
+      stages: ['Lead', 'Underwriting', 'LLC Acquisition', 'PM Handoff', 'Cash Flow'],
     },
   };
 
