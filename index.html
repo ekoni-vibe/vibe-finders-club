@@ -328,7 +328,7 @@
         <div x-show="payoutConfig" class="mt-4 space-y-3">
           <p
             class="border-l-2 border-amber-600 pl-3 text-[10px] leading-relaxed text-slate-400"
-            x-text="payoutConfig && payoutConfig.USE_GLOBAL_CHECKOUT
+            x-text="payoutConfig && (payoutConfig.use_global_checkout ?? payoutConfig.USE_GLOBAL_CHECKOUT)
               ? 'Global checkout options are enabled. Availability depends on provider and jurisdiction.'
               : 'Global checkout is disabled; transfer and support methods are shown.'"
           ></p>

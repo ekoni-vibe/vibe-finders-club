@@ -40,7 +40,13 @@ Configure your own Supabase, OpenRouter, Resend, and Make.com credentials in `.e
 
 ![Checkout](./assets/screenshots/05-commercial-checkout.png)
 
-Checkout methods shown are example configuration options. Replace every placeholder in `payout-config.example.json` and confirm provider availability before accepting payments.
+Checkout methods shown are example configuration options. Keep placeholders in the tracked example; use private server-side configuration for credentials and share real receiving details only through an appropriate secure channel.
+
+## Monetization & Sponsorship
+
+The project supports flexible global payment methods to accommodate customers across regions. Chapa is included for local Ethiopian users, with Telebirr, CBE, or Dashen Bank payment options subject to provider availability. International users can request Payoneer invoice details or use USDT on the TRON (TRC20) network. Lemon Squeezy is also listed as a global merchant-of-record checkout option and may require a foreign entity.
+
+These are configuration examples, not active payment integrations. Keep API credentials in server-side environment variables (including `CHAPA_SECRET_KEY` and `LEMON_SQUEEZY_API_KEY`); do not place secrets, private keys, or recovery phrases in browser code or tracked files. Confirm provider eligibility, fees, tax, and applicable local requirements before accepting payments. Public checkout links or wallet addresses should only be published after an intentional disclosure review.
 
 ## Quick Start
 ```bash

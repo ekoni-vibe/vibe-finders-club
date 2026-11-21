@@ -117,28 +117,18 @@ test('international investor underwriting calculates management fees, cap rate, 
 test('global checkout includes all configured providers and disabled mode returns transfer and support methods', () => {
   const globalMethods = commercialCheckout.getAvailablePaymentMethods(payoutConfig);
   const globalMethodIds = globalMethods.map((method) => method.id);
-  const expectedGlobalIds = [
-    'stripe',
-    'merchant-of-record',
-    'wise',
-    'cryptocurrency',
-    'western-union',
-    'moneygram',
-    'manual-swift-iban',
-    'github-sponsors',
-    'ko-fi',
-  ];
+  const expectedGlobalIds = ['chapa', 'payoneer', 'crypto-usdt', 'lemon-squeezy'];
 
   assert.deepEqual(globalMethodIds, expectedGlobalIds);
 
   const manualMethods = commercialCheckout.getAvailablePaymentMethods({
     ...payoutConfig,
-    USE_GLOBAL_CHECKOUT: false,
+    use_global_checkout: false,
   });
   assert.deepEqual(
     manualMethods.map((method) => method.id),
-    ['wise', 'cryptocurrency', 'western-union', 'moneygram', 'manual-swift-iban', 'github-sponsors', 'ko-fi'],
+    ['payoneer', 'crypto-usdt'],
   );
   assert.ok(manualMethods.every((method) => ['instructions', 'support'].includes(method.kind)));
-  assert.ok(manualMethods.every((method) => !['stripe', 'merchant-of-record'].includes(method.id)));
+  assert.ok(manualMethods.every((method) => !['chapa', 'lemon-squeezy'].includes(method.id)));
 });

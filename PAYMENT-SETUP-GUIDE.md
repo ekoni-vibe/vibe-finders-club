@@ -14,84 +14,70 @@ This guide covers provider setup for license payments, international transfers, 
 
 ## 1. Hosted commercial checkout
 
-Choose a provider that supports your business and customers. The project includes example slots for Stripe Payment Links and a Merchant of Record (MoR) checkout such as Lemon Squeezy or Paddle; these are examples, not active integrations.
+The example config includes Chapa for local Ethiopian payments and Lemon Squeezy as a global merchant-of-record option. These are configuration examples, not active integrations; verify provider eligibility and business requirements for your location.
 
-### Stripe Payment Links
+### Chapa
 
-1. Create and verify an eligible Stripe account for your business and location.
-2. In the Stripe Dashboard, create the product and price for each license tier (for example, Pro and Commercial).
-3. Create a Payment Link for each tier. Configure the product, currency, tax settings, and confirmation/return behavior.
-4. Test the links in Stripe test mode, then activate the account and create/use live links only after completing Stripe's onboarding and compliance checks.
-5. In a private deployment configuration, set the Pro and Commercial checkout destinations corresponding to `YOUR_STRIPE_PRO_PAYMENT_LINK_URL` and `YOUR_STRIPE_COMMERCIAL_PAYMENT_LINK_URL`. Do not replace the placeholders in the tracked example with private account data.
+1. Create and verify a Chapa merchant account and confirm that the payment methods you need (such as Telebirr, CBE, or Dashen Bank) are supported for your account.
+2. Set `CHAPA_SECRET_KEY` in the server environment or deployment platform's encrypted environment-variable store. Never expose this key in browser code or a public config file.
+3. Configure the checkout link in a private, access-controlled runtime configuration. Do not replace the placeholder in the tracked example with private account data.
+4. Test in the provider's supported test environment and complete its onboarding and compliance checks before accepting live payments.
 
-Official documentation: [Stripe Payment Links](https://docs.stripe.com/payment-links).
+Official documentation: [Chapa documentation](https://developer.chapa.co/).
 
-### Lemon Squeezy or Paddle
+### Lemon Squeezy
 
-1. Create a merchant account and complete identity, business, and payout verification.
-2. Create the products/prices for the relevant license tiers, configure taxes and customer-facing license terms, and verify that the provider supports your business and destination.
-3. Generate a hosted checkout URL for each tier and run test purchases before publishing.
-4. Use the private runtime configuration for the Pro and Commercial URLs. The example uses `YOUR_MOR_PRO_CHECKOUT_URL` and `YOUR_MOR_COMMERCIAL_CHECKOUT_URL` as placeholders.
-5. Review the provider's merchant-of-record responsibilities, refund process, chargeback handling, and payout schedule; those terms vary by provider and country.
+1. Confirm that your business is eligible; a foreign entity may be required.
+2. Create and verify the merchant account, products, taxes, and customer-facing license terms.
+3. Set `LEMON_SQUEEZY_API_KEY` only in the server environment. Configure the hosted checkout link through a private runtime configuration and test it before publishing.
+4. Review the merchant-of-record responsibilities, refund process, chargeback handling, and payout schedule.
 
-Official documentation: [Lemon Squeezy getting started](https://docs.lemonsqueezy.com/guides/getting-started) and [Paddle documentation](https://developer.paddle.com/).
+Official documentation: [Lemon Squeezy getting started](https://docs.lemonsqueezy.com/guides/getting-started).
 
-## 2. Wise international transfers
+## 2. Payoneer international transfers
 
-1. Check Wise's current country and business eligibility requirements; open and verify the appropriate personal or business account.
-2. Enable the currency balances and receiving methods available to your account. Wise may provide local account details for some currencies and international transfer details for others.
-3. Review the receiving details, supported currencies, fees, limits, and expected settlement time shown in your account.
-4. Send a small test transfer from a trusted sender and reconcile it before sharing instructions with customers.
-5. Put only a generic placeholder in the tracked example's Wise instructions field. Share verified receiving instructions privately or through a secure, access-controlled production configuration.
+1. Check Payoneer's current country, business, and payment eligibility requirements and verify the appropriate account.
+2. Review the virtual USD/EUR receiving details, supported currencies, fees, limits, and expected settlement time in your account.
+3. Verify a test transfer before sharing instructions. Request or provide invoice details privately; do not put account or beneficiary details in the tracked example.
 
-Official information: [Wise](https://wise.com/) and [Wise Help Centre](https://wise.com/help/).
+Official information: [Payoneer](https://www.payoneer.com/).
 
-## 3. Cryptocurrency (USDT TRC20 or BTC)
+## 3. Cryptocurrency (USDT TRC20)
 
 1. Decide whether to use a self-custody wallet or a supported exchange account. Verify provider availability, identity requirements, custody terms, and local rules.
 2. Create a dedicated receiving wallet/account. Secure the recovery phrase offline; never send it to a payer, support agent, or website.
-3. In the wallet, select **Receive** and the exact asset/network. For USDT, confirm that both parties support **TRON (TRC20)**. For BTC, use a Bitcoin address and Bitcoin network.
+3. In the wallet, select **Receive** and confirm that both parties support USDT on **TRON (TRC20)**.
 4. Verify the full address and network through a separate trusted channel. Never assume that similar token names use compatible networks. Consider a small test transfer first; crypto transfers are generally irreversible.
 5. Keep wallet addresses out of the public repository as requested. Store only approved public receiving instructions in an access-controlled runtime configuration, and never store a private key or recovery phrase in `.env`, source code, or a browser app.
 6. Maintain records of transaction IDs, amounts, timestamps, and fair-market-value accounting as required by local law.
 
 Provider help: [Coinbase crypto receiving](https://help.coinbase.com/en/coinbase/trading-and-funding/sending-or-receiving-cryptocurrency/receive-crypto), [Binance Academy](https://academy.binance.com/), and [Trust Wallet Support](https://support.trustwallet.com/).
 
-## 4. Western Union and MoneyGram
-
-1. Check whether the provider permits the intended business/commercial payment and supports receiving in your country. Cash pickup, bank deposit, limits, and fees vary by corridor.
-2. Create or verify the appropriate receiver account and follow the provider's instructions for the exact transfer type.
-3. Give the sender only the required recipient details through a private channel. Depending on the route, this may include your legal receiver name, city, and country. Do not publish identity documents, transfer-control numbers, or private details in the repository.
-4. Agree on the payment purpose, currency, fees, and proof-of-payment process before sending. Verify funds through the provider directly; do not rely solely on screenshots or emailed receipts.
-5. Use the Western Union and MoneyGram placeholders in `payout-config.example.json` as a schema reminder only. Do not put real receiver details in the tracked example.
-
-Official information: [Western Union](https://www.westernunion.com/) and [MoneyGram](https://www.moneygram.com/).
-
-## 5. Community sponsorships and donations
+## 4. Community sponsorships and donations
 
 ### GitHub Sponsors
 
 1. Visit [GitHub Sponsors](https://github.com/sponsors) and apply or enable sponsorship for an eligible account/organization.
 2. Complete the platform's payout and tax onboarding, then configure one-time and/or monthly sponsorship tiers.
-3. Add a public sponsor URL to a private deployment configuration. The example uses `[YOUR_GITHUB_SPONSORS_URL]`.
+3. Share your public sponsor page URL only where you intend it to be discoverable.
 
 ### Ko-fi
 
 1. Create an account at [Ko-fi](https://ko-fi.com/) and connect a supported payment provider from its dashboard.
 2. Configure one-time tips, memberships, or other support options, and test the public page and payout route.
-3. Add the public page URL to a private deployment configuration. The example uses `[YOUR_KOFI_URL]`.
+3. Share your public Ko-fi page URL only where you intend it to be discoverable.
 
 Review the platforms' eligibility, fees, payout availability, tax treatment, and terms. Sponsorships should not be represented as purchases of a license unless the corresponding license terms and checkout are clearly presented.
 
-## 6. Example configuration fields
+## 5. Example configuration fields
 
 The tracked `payout-config.example.json` provides placeholders for:
 
-- Hosted checkout: Stripe Payment Link and Lemon Squeezy/Paddle URLs for Pro and Commercial.
-- Transfer instructions: Wise, Western Union, MoneyGram, and manual SWIFT/IBAN.
-- Crypto: separate USDT TRC20 and BTC placeholders.
-- Community support: GitHub Sponsors and Ko-fi URLs.
+- Chapa (Ethiopia) checkout link and server-side `CHAPA_SECRET_KEY` environment-variable name.
+- Payoneer invoice-request instructions for international transfers.
+- USDT TRC20 receiving-address placeholder.
+- Lemon Squeezy checkout link and server-side `LEMON_SQUEEZY_API_KEY` environment-variable name.
 
-Set `USE_GLOBAL_CHECKOUT` to `true` to display hosted checkout and configured transfer/support options, or `false` to hide hosted checkout while retaining enabled transfer and support methods. The example uses placeholders and does not create provider accounts, payment links, or receiving addresses.
+Set `use_global_checkout` to `true` to display checkout and transfer instruction methods, or `false` to hide hosted checkout methods while retaining transfer instructions. The example uses placeholders and does not create provider accounts, payment links, or receiving addresses.
 
 For production, keep this checked-in example unchanged. Put secrets in server-side environment variables and provide any real public checkout links or recipient instructions only through a secure production configuration mechanism. Remember that a public checkout URL, wallet address, or transfer instruction may not be a credential, but it can still expose business or personal information and must not be added to the open repository without an intentional disclosure review.
