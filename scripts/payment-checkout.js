@@ -1,62 +1,79 @@
-const CHAPA_INITIALIZE_URL = 'https://api.chapa.co/v1/transaction/initialize';
+const payoutConfig = require('../payout-config.example.json');
 
-function initializeChapaTransaction(transaction) {
-  const secretKey = process.env.CHAPA_SECRET_KEY;
-  if (!secretKey || !secretKey.trim()) {
-    throw new Error('CHAPA_SECRET_KEY must be configured in the server environment.');
+/*
+ * NOTE: The 16-digit TeleBirr Virtual Visa is a spending instrument, not a merchant receiving account.
+ * It cannot be used as a checkout endpoint. Use TeleBirr Merchant Pay Links or personal transfer
+ * numbers for receiving funds.
+ */
+
+function requireEnvironmentValue(name) {
+  const value = process.env[name];
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`${name} must be configured in the server environment.`);
   }
-  if (!transaction || typeof transaction !== 'object' || Array.isArray(transaction)) {
-    throw new TypeError('Transaction details must be an object.');
+  return value.trim();
+}
+
+function getMethod(methodId) {
+  const method = payoutConfig.methods.find((candidate) => candidate.id === methodId);
+  if (!method) {
+    throw new RangeError(`Payment method is not configured: ${methodId}`);
+  }
+  return method;
+}
+
+function getCheckoutUrl(methodId, environmentName) {
+  const method = getMethod(methodId);
+  const configuredUrl = process.env[environmentName]?.trim() || method.checkout_link;
+  if (typeof configuredUrl !== 'string' || configuredUrl.trim() === '') {
+    throw new Error(`A checkout link is not configured for ${methodId}.`);
   }
 
-  const { amount, currency, email, firstName, lastName, txRef, callbackUrl, returnUrl } = transaction;
+  const checkoutUrl = new URL(configuredUrl);
+  if (checkoutUrl.protocol !== 'https:') {
+    throw new TypeError('Checkout URLs must use HTTPS.');
+  }
+  return checkoutUrl;
+}
+
+function initiateChapaCheckout(amount, email) {
+  requireEnvironmentValue('CHAPA_SECRET_KEY');
   if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
     throw new TypeError('Transaction amount must be a positive number.');
   }
-  for (const [field, value] of Object.entries({
-    currency, email, firstName, lastName, txRef, callbackUrl, returnUrl,
-  })) {
-    if (typeof value !== 'string' || !value.trim()) {
-      throw new TypeError(`${field} must be a non-empty string.`);
-    }
+  if (typeof email !== 'string' || !email.trim()) {
+    throw new TypeError('Customer email must be a non-empty string.');
   }
 
-  // This helper prepares a mock request only; it never sends credentials or transaction data.
-  return {
-    status: 'mock-ready',
-    provider: 'chapa',
-    method: 'POST',
-    endpoint: CHAPA_INITIALIZE_URL,
-    credentialConfigured: Boolean(secretKey),
-    payload: {
-      amount: String(amount),
-      currency,
-      email,
-      first_name: firstName,
-      last_name: lastName,
-      tx_ref: txRef,
-      callback_url: callbackUrl,
-      return_url: returnUrl,
-    },
-  };
+  const checkoutUrl = getCheckoutUrl('chapa', 'CHAPA_CHECKOUT_LINK');
+  checkoutUrl.searchParams.set('amount', String(amount));
+  // Keep customer email out of URLs; a real server integration should send it in the request body.
+  return checkoutUrl.href;
 }
 
-function displayPaymentInstructions(methodId, config) {
-  if (!config || !Array.isArray(config.methods)) {
-    throw new TypeError('Payout configuration must include a methods array.');
-  }
-  if (!['payoneer', 'crypto-usdt'].includes(methodId)) {
-    throw new RangeError(`Unsupported manual payment method: ${methodId}`);
+function initiateLemonSqueezyCheckout(productId) {
+  requireEnvironmentValue('LEMON_SQUEEZY_API_KEY');
+  if (typeof productId !== 'string' || !productId.trim()) {
+    throw new TypeError('Product ID must be a non-empty string.');
   }
 
-  const method = config.methods.find((candidate) => candidate.id === methodId);
-  if (!method || typeof method.instructions !== 'string' || !method.instructions.trim()) {
-    throw new TypeError(`Instructions are not configured for payment method: ${methodId}`);
-  }
-
-  const output = `${method.name}\n${method.instructions}`;
-  console.log(output);
-  return output;
+  const checkoutUrl = getCheckoutUrl('lemon-squeezy', 'LEMON_SQUEEZY_CHECKOUT_URL');
+  checkoutUrl.searchParams.set('variant', productId.trim());
+  return checkoutUrl.href;
 }
 
-module.exports = { initializeChapaTransaction, displayPaymentInstructions };
+function getTeleBirrDonationLink() {
+  const method = getMethod('telebirr-donation');
+  const donationUrl = process.env.TELEBIRR_DONATION_LINK?.trim() || method.checkout_link;
+  const checkoutUrl = new URL(donationUrl);
+  if (checkoutUrl.protocol !== 'https:') {
+    throw new TypeError('TeleBirr donation links must use HTTPS.');
+  }
+  return checkoutUrl.href;
+}
+
+module.exports = {
+  initiateChapaCheckout,
+  initiateLemonSqueezyCheckout,
+  getTeleBirrDonationLink,
+};

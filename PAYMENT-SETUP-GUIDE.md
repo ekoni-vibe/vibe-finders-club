@@ -1,6 +1,6 @@
 # Global Payment Setup Guide
 
-This guide covers provider setup for license payments, international transfers, community support, and donations. Provider availability, fees, payout timing, and legal requirements depend on your location, business status, and the sender's destination. Confirm current requirements directly with each provider before accepting funds.
+This guide covers provider setup for local Ethiopian payments, global checkout, donations, and manual international transfers. Provider availability, fees, payout timing, and legal requirements depend on your location, business status, and the sender's destination. Confirm current requirements directly with each provider before accepting funds.
 
 ## Security before setup
 
@@ -20,7 +20,7 @@ The example config includes Chapa for local Ethiopian payments and Lemon Squeezy
 
 1. Create and verify a Chapa merchant account and confirm that the payment methods you need (such as Telebirr, CBE, or Dashen Bank) are supported for your account.
 2. Set `CHAPA_SECRET_KEY` in the server environment or deployment platform's encrypted environment-variable store. Never expose this key in browser code or a public config file.
-3. Configure the checkout link in a private, access-controlled runtime configuration. Do not replace the placeholder in the tracked example with private account data.
+3. Configure `CHAPA_CHECKOUT_LINK` in the server environment or private checkout configuration. Do not replace the placeholder in the tracked example with private account data.
 4. Test in the provider's supported test environment and complete its onboarding and compliance checks before accepting live payments.
 
 Official documentation: [Chapa documentation](https://developer.chapa.co/).
@@ -29,29 +29,22 @@ Official documentation: [Chapa documentation](https://developer.chapa.co/).
 
 1. Confirm that your business is eligible; a foreign entity may be required.
 2. Create and verify the merchant account, products, taxes, and customer-facing license terms.
-3. Set `LEMON_SQUEEZY_API_KEY` only in the server environment. Configure the hosted checkout link through a private runtime configuration and test it before publishing.
+3. Set `LEMON_SQUEEZY_API_KEY` only in the server environment. Configure `LEMON_SQUEEZY_CHECKOUT_URL` in the server environment or a private runtime configuration and test it before publishing.
 4. Review the merchant-of-record responsibilities, refund process, chargeback handling, and payout schedule.
 
 Official documentation: [Lemon Squeezy getting started](https://docs.lemonsqueezy.com/guides/getting-started).
 
-## 2. Payoneer international transfers
+## 2. TeleBirr donations
 
-1. Check Payoneer's current country, business, and payment eligibility requirements and verify the appropriate account.
-2. Review the virtual USD/EUR receiving details, supported currencies, fees, limits, and expected settlement time in your account.
-3. Verify a test transfer before sharing instructions. Request or provide invoice details privately; do not put account or beneficiary details in the tracked example.
+1. Use a TeleBirr Merchant Pay Link or QR code for receiving funds. A TeleBirr Virtual Visa is a spending instrument, not a merchant receiving account.
+2. Verify the destination and test a small donation before publishing the link.
+3. Set `TELEBIRR_DONATION_LINK` in the server environment if overriding the example link. Keep personal contact information as placeholders in the tracked example and share it only through a deliberate, private channel.
 
-Official information: [Payoneer](https://www.payoneer.com/).
+## 3. Western Union and MoneyGram
 
-## 3. Cryptocurrency (USDT TRC20)
-
-1. Decide whether to use a self-custody wallet or a supported exchange account. Verify provider availability, identity requirements, custody terms, and local rules.
-2. Create a dedicated receiving wallet/account. Secure the recovery phrase offline; never send it to a payer, support agent, or website.
-3. In the wallet, select **Receive** and confirm that both parties support USDT on **TRON (TRC20)**.
-4. Verify the full address and network through a separate trusted channel. Never assume that similar token names use compatible networks. Consider a small test transfer first; crypto transfers are generally irreversible.
-5. Keep wallet addresses out of the public repository as requested. Store only approved public receiving instructions in an access-controlled runtime configuration, and never store a private key or recovery phrase in `.env`, source code, or a browser app.
-6. Maintain records of transaction IDs, amounts, timestamps, and fair-market-value accounting as required by local law.
-
-Provider help: [Coinbase crypto receiving](https://help.coinbase.com/en/coinbase/trading-and-funding/sending-or-receiving-cryptocurrency/receive-crypto), [Binance Academy](https://academy.binance.com/), and [Trust Wallet Support](https://support.trustwallet.com/).
+1. Confirm the provider supports the intended commercial transfer and receiving destination.
+2. Share receiver name and location details privately; do not commit real names, phone numbers, or transfer details in the repository.
+3. Verify receipt with the provider directly and follow its fee, identity, tax, and compliance requirements.
 
 ## 4. Community sponsorships and donations
 
@@ -74,10 +67,10 @@ Review the platforms' eligibility, fees, payout availability, tax treatment, and
 The tracked `payout-config.example.json` provides placeholders for:
 
 - Chapa (Ethiopia) checkout link and server-side `CHAPA_SECRET_KEY` environment-variable name.
-- Payoneer invoice-request instructions for international transfers.
-- USDT TRC20 receiving-address placeholder.
 - Lemon Squeezy checkout link and server-side `LEMON_SQUEEZY_API_KEY` environment-variable name.
+- TeleBirr donation Pay Link and contact placeholders.
+- Western Union/MoneyGram receiver instructions.
 
-Set `use_global_checkout` to `true` to display checkout and transfer instruction methods, or `false` to hide hosted checkout methods while retaining transfer instructions. The example uses placeholders and does not create provider accounts, payment links, or receiving addresses.
+Set `use_global_checkout` to `true` to display checkout and transfer instruction methods, or `false` to hide hosted checkout methods while retaining transfer instructions. The example uses placeholders and does not create provider accounts, payment links, or receiving details.
 
 For production, keep this checked-in example unchanged. Put secrets in server-side environment variables and provide any real public checkout links or recipient instructions only through a secure production configuration mechanism. Remember that a public checkout URL, wallet address, or transfer instruction may not be a credential, but it can still expose business or personal information and must not be added to the open repository without an intentional disclosure review.

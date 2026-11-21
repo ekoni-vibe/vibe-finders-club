@@ -1,71 +1,88 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const config = require('../payout-config.example.json');
-const { initializeChapaTransaction, displayPaymentInstructions } = require('../scripts/payment-checkout');
+const {
+  initiateChapaCheckout,
+  initiateLemonSqueezyCheckout,
+  getTeleBirrDonationLink,
+} = require('../scripts/payment-checkout');
 
-const transaction = {
-  amount: 25,
-  currency: 'ETB',
-  email: 'customer@example.test',
-  firstName: 'Test',
-  lastName: 'Customer',
-  txRef: 'test-reference',
-  callbackUrl: 'https://example.test/callback',
-  returnUrl: 'https://example.test/return',
-};
-
-test('prepares a mock Chapa request from a server environment key without returning it', () => {
-  const originalKey = process.env.CHAPA_SECRET_KEY;
-  try {
-    delete process.env.CHAPA_SECRET_KEY;
-    assert.throws(() => initializeChapaTransaction(transaction), /CHAPA_SECRET_KEY/);
-
-    process.env.CHAPA_SECRET_KEY = 'test-only-value';
-    const result = initializeChapaTransaction(transaction);
-
-    assert.equal(result.status, 'mock-ready');
-    assert.equal(result.credentialConfigured, true);
-    assert.deepEqual(result.payload, {
-      amount: '25',
-      currency: 'ETB',
-      email: 'customer@example.test',
-      first_name: 'Test',
-      last_name: 'Customer',
-      tx_ref: 'test-reference',
-      callback_url: 'https://example.test/callback',
-      return_url: 'https://example.test/return',
-    });
-    assert.equal(JSON.stringify(result).includes('test-only-value'), false);
-  } finally {
-    if (originalKey === undefined) delete process.env.CHAPA_SECRET_KEY;
-    else process.env.CHAPA_SECRET_KEY = originalKey;
+function withEnvironment(values, callback) {
+  const previous = Object.fromEntries(
+    Object.keys(values).map((name) => [name, process.env[name]]),
+  );
+  for (const [name, value] of Object.entries(values)) {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
   }
+
+  try {
+    return callback();
+  } finally {
+    for (const [name, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+}
+
+test('builds a mock Chapa checkout URL using server environment values', () => {
+  withEnvironment({
+    CHAPA_SECRET_KEY: undefined,
+    CHAPA_CHECKOUT_LINK: undefined,
+  }, () => {
+    assert.throws(() => initiateChapaCheckout(25, 'customer@example.test'), /CHAPA_SECRET_KEY/);
+  });
+
+  withEnvironment({
+    CHAPA_SECRET_KEY: 'test-only-value',
+    CHAPA_CHECKOUT_LINK: 'https://checkout.chapa.co/test-link',
+  }, () => {
+    const checkoutUrl = new URL(initiateChapaCheckout(25, 'customer@example.test'));
+    assert.equal(checkoutUrl.origin, 'https://checkout.chapa.co');
+    assert.equal(checkoutUrl.searchParams.get('amount'), '25');
+    assert.equal(checkoutUrl.searchParams.has('email'), false);
+    assert.equal(checkoutUrl.href.includes('test-only-value'), false);
+  });
 });
 
-test('displays the configured Payoneer and USDT instruction placeholders', () => {
-  const originalLog = console.log;
-  const output = [];
-  console.log = (message) => output.push(message);
-  try {
+test('builds a mock Lemon Squeezy URL and requires its API key from the environment', () => {
+  withEnvironment({
+    LEMON_SQUEEZY_API_KEY: undefined,
+    LEMON_SQUEEZY_CHECKOUT_URL: undefined,
+  }, () => {
+    assert.throws(() => initiateLemonSqueezyCheckout('variant-123'), /LEMON_SQUEEZY_API_KEY/);
+  });
+
+  withEnvironment({
+    LEMON_SQUEEZY_API_KEY: 'test-only-value',
+    LEMON_SQUEEZY_CHECKOUT_URL: 'https://store.example.test/checkout',
+  }, () => {
+    const checkoutUrl = new URL(initiateLemonSqueezyCheckout('variant-123'));
+    assert.equal(checkoutUrl.origin, 'https://store.example.test');
+    assert.equal(checkoutUrl.searchParams.get('variant'), 'variant-123');
+  });
+});
+
+test('returns the configured TeleBirr donation link or its safe example URL', () => {
+  withEnvironment({ TELEBIRR_DONATION_LINK: 'https://telebirr.et/pay/test-merchant' }, () => {
+    assert.equal(getTeleBirrDonationLink(), 'https://telebirr.et/pay/test-merchant');
+  });
+
+  withEnvironment({ TELEBIRR_DONATION_LINK: undefined }, () => {
     assert.equal(
-      displayPaymentInstructions('payoneer', config),
-      'Payoneer (Global B2B)\nRequest invoice details via email. Withdrawals supported to Ethiopian banks.',
+      getTeleBirrDonationLink(),
+      'https://telebirr.et/pay/your-merchant-link',
     );
-    assert.match(displayPaymentInstructions('crypto-usdt', config), /YOUR_PUBLIC_USDT_TRC20_ADDRESS/);
-    assert.equal(output.length, 2);
-  } finally {
-    console.log = originalLog;
-  }
+  });
 });
 
-test('rejects invalid Chapa transactions and unsupported instruction methods', () => {
-  const originalKey = process.env.CHAPA_SECRET_KEY;
-  process.env.CHAPA_SECRET_KEY = 'test-only-value';
-  try {
-    assert.throws(() => initializeChapaTransaction({ ...transaction, amount: 0 }), /positive number/);
-    assert.throws(() => displayPaymentInstructions('lemon-squeezy', config), /Unsupported/);
-  } finally {
-    if (originalKey === undefined) delete process.env.CHAPA_SECRET_KEY;
-    else process.env.CHAPA_SECRET_KEY = originalKey;
-  }
+test('rejects invalid checkout values and non-HTTPS environment links', () => {
+  withEnvironment({
+    CHAPA_SECRET_KEY: 'test-only-value',
+    CHAPA_CHECKOUT_LINK: 'http://checkout.chapa.co/link',
+  }, () => {
+    assert.throws(() => initiateChapaCheckout(0, 'customer@example.test'), /positive number/);
+    assert.throws(() => initiateChapaCheckout(1, ''), /email/);
+    assert.throws(() => initiateChapaCheckout(1, 'customer@example.test'), /HTTPS/);
+  });
 });

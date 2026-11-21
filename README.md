@@ -44,9 +44,9 @@ Checkout methods shown are example configuration options. Keep placeholders in t
 
 ## Monetization & Sponsorship
 
-The project supports flexible global payment methods to accommodate customers across regions. Chapa is included for local Ethiopian users, with Telebirr, CBE, or Dashen Bank payment options subject to provider availability. International users can request Payoneer invoice details or use USDT on the TRON (TRC20) network. Lemon Squeezy is also listed as a global merchant-of-record checkout option and may require a foreign entity.
+The project supports flexible payment methods across regions: Chapa for local Ethiopian payments, Lemon Squeezy for global card checkout, TeleBirr Pay Links or QR for local donations, and Western Union/MoneyGram for manual international transfers. Provider eligibility and availability vary by country and account.
 
-These are configuration examples, not active payment integrations. Keep API credentials in server-side environment variables (including `CHAPA_SECRET_KEY` and `LEMON_SQUEEZY_API_KEY`); do not place secrets, private keys, or recovery phrases in browser code or tracked files. Confirm provider eligibility, fees, tax, and applicable local requirements before accepting payments. Public checkout links or wallet addresses should only be published after an intentional disclosure review.
+These are configuration examples, not active payment integrations. Keep API credentials in server-side environment variables (including `CHAPA_SECRET_KEY` and `LEMON_SQUEEZY_API_KEY`); do not place secrets, private keys, recovery phrases, or personal contact details in browser code or tracked files. Confirm provider eligibility, fees, tax, and applicable local requirements before accepting payments. Public checkout links or receiver details should only be published after an intentional disclosure review.
 
 ## Quick Start
 ```bash

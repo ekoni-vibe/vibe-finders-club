@@ -3,29 +3,30 @@
   "methods": [
     {
       "id": "chapa",
-      "name": "Chapa (Ethiopia)",
-      "description": "Secure local payments via Telebirr, CBE, or Dashen Bank.",
-      "checkout_link": "[YOUR_CHAPA_CHECKOUT_LINK]",
-      "env_key": "CHAPA_SECRET_KEY"
-    },
-    {
-      "id": "payoneer",
-      "name": "Payoneer (Global B2B)",
-      "description": "International bank transfer to my virtual USD/EUR account.",
-      "instructions": "Request invoice details via email. Withdrawals supported to Ethiopian banks."
-    },
-    {
-      "id": "crypto-usdt",
-      "name": "Cryptocurrency (USDT TRC20)",
-      "description": "Fast, borderless commercial license payment.",
-      "instructions": "Network: TRON (TRC20). Address: [YOUR_PUBLIC_USDT_TRC20_ADDRESS]"
+      "name": "Chapa (Ethiopia Local)",
+      "description": "Pay via Telebirr, CBE, or local bank.",
+      "checkout_link": "https://checkout.chapa.co/your-link-here",
+      "env_required": "CHAPA_SECRET_KEY"
     },
     {
       "id": "lemon-squeezy",
-      "name": "Lemon Squeezy (Global MoR)",
-      "description": "Automated global checkout (Requires foreign entity).",
-      "checkout_link": "[YOUR_LEMON_SQUEEZY_LINK]",
-      "env_key": "LEMON_SQUEEZY_API_KEY"
+      "name": "Lemon Squeezy (Global)",
+      "description": "Secure global credit card payments (Merchant of Record).",
+      "checkout_link": "https://your-store.lemonsqueezy.com/checkout/buy/your-link",
+      "env_required": "LEMON_SQUEEZY_API_KEY"
+    },
+    {
+      "id": "telebirr-donation",
+      "name": "TeleBirr Donation",
+      "description": "Direct local micro-donations via TeleBirr Pay Link or QR.",
+      "instructions": "Scan QR or use Pay Link. Contact: [YOUR_CONTACT_EMAIL] | [YOUR_TELEBIRR_PHONE]",
+      "checkout_link": "https://telebirr.et/pay/your-merchant-link"
+    },
+    {
+      "id": "western-union",
+      "name": "Western Union / MoneyGram",
+      "description": "Manual international cash transfer.",
+      "instructions": "Receiver: [YOUR_LEGAL_NAME]. Contact for City/Country details."
     }
   ]
 }

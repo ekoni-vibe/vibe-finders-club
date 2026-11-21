@@ -11,6 +11,7 @@ triage-execution-log.json
 pending-remittances.json
 extracted-listings.json
 payout-config.json
+payment-config.json
 .DS_Store
 Thumbs.db
 

@@ -65,7 +65,7 @@
     }
 
     const checkoutUrl = checkoutUrlForTier.trim();
-    if (/\[YOUR_[^\]]+\]/i.test(checkoutUrl)) {
+    if (/\[YOUR_[^\]]+\]|\byour[-_]/i.test(checkoutUrl)) {
       return { status: 'placeholder', checkoutUrl, tier, methodId };
     }
 

@@ -47,24 +47,28 @@ test('continues to accept the legacy paymentMethods property', () => {
   );
 });
 
-test('supports the Ethiopia-friendly config schema and its checkout placeholders', () => {
+test('supports the Ethiopia-compatible config schema and its checkout placeholders', () => {
   assert.deepEqual(
     checkout.getAvailablePaymentMethods(config).map(({ id, kind }) => [id, kind]),
     [
       ['chapa', 'checkout'],
-      ['payoneer', 'instructions'],
-      ['crypto-usdt', 'instructions'],
       ['lemon-squeezy', 'checkout'],
+      ['telebirr-donation', 'checkout'],
+      ['western-union', 'instructions'],
     ],
   );
   assert.deepEqual(
     checkout.getAvailablePaymentMethods({ ...config, use_global_checkout: false }).map(({ id }) => id),
-    ['payoneer', 'crypto-usdt'],
+    ['western-union'],
   );
 
-  const result = checkout.initiateCommercialLicenseCheckout('Pro', 'chapa', config);
+  let redirectedTo = null;
+  const result = checkout.initiateCommercialLicenseCheckout('Pro', 'chapa', config, {
+    redirectTo: (url) => { redirectedTo = url; },
+  });
   assert.equal(result.status, 'placeholder');
-  assert.equal(result.checkoutUrl, '[YOUR_CHAPA_CHECKOUT_LINK]');
+  assert.equal(result.checkoutUrl, 'https://checkout.chapa.co/your-link-here');
+  assert.equal(redirectedTo, null);
 });
 
 test('does not redirect to an unconfigured hosted checkout placeholder', () => {
